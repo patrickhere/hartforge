@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hart forge</title>
+<style>
+  :root {
+    --base: #1e1e2e; --mantle: #181825; --surface: #313244;
+    --text: #cdd6f4; --subtext: #a6adc8; --overlay: #6c7086;
+    --mauve: #cba6f7; --peach: #fab387; --green: #a6e3a1;
+    --blue: #89b4fa; --yellow: #f9e2af; --red: #f38ba8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--base); color: var(--text);
+    font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+  main { max-width: 34rem; width: 100%; }
+  h1 {
+    font-size: 1.6rem; font-weight: 600; letter-spacing: .45em;
+    color: var(--mauve); margin-bottom: .4rem;
+  }
+  h1 .spark { color: var(--peach); }
+  .tagline { color: var(--subtext); font-size: .85rem; margin-bottom: 2.2rem; }
+  .rule { border: 0; border-top: 1px solid var(--surface); margin: 1.6rem 0; }
+  ul { list-style: none; }
+  li { margin: .65rem 0; font-size: .95rem; }
+  li a {
+    color: var(--blue); text-decoration: none;
+  }
+  li a:hover { color: var(--peach); }
+  li .desc { color: var(--overlay); }
+  .prompt { color: var(--green); }
+  footer { margin-top: 2.2rem; font-size: .75rem; color: var(--overlay); }
+  footer a { color: var(--overlay); }
+</style>
+</head>
+<body>
+<main>
+  <h1>hart forge<span class="spark"> *</span></h1>
+  <p class="tagline">self-hosted everything. usa.</p>
+  <hr class="rule">
+  <ul>
+    <li><span class="prompt">-&gt;</span> <a href="https://git.hartforge.dev">git</a> <span class="desc">- forgejo, where the configs live</span></li>
+    <li><span class="prompt">-&gt;</span> <a href="https://gist.hartforge.dev">gist</a> <span class="desc">- snippets and pastes</span></li>
+    <li><span class="prompt">-&gt;</span> <a href="https://books.hartforge.dev">books</a> <span class="desc">- the library</span></li>
+    <li><span class="prompt">-&gt;</span> <a href="https://jellyfin.hartforge.dev">jellyfin</a> <span class="desc">- movies and tv</span></li>
+    <li><span class="prompt">-&gt;</span> <a href="https://seerr.hartforge.dev">requests</a> <span class="desc">- ask for something to watch</span></li>
+  </ul>
+  <hr class="rule">
+  <footer>
+    forged on proxmox + a small vps · <a href="/.well-known/security.txt">security.txt</a>
+  </footer>
+</main>
+</body>
+</html>

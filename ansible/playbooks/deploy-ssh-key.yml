@@ -1,0 +1,22 @@
+---
+# Deploy SSH keys to all hosts from group_vars.
+# Usage: ansible-playbook playbooks/deploy-ssh-key.yml
+# Keys defined in: inventory/group_vars/all.yml -> ssh_authorized_keys
+
+- name: Deploy SSH keys to all hosts
+  hosts: linux
+  become: false
+  tags: [ssh]
+  tasks:
+    - name: Ensure .ssh directory exists
+      ansible.builtin.file:
+        path: ~/.ssh
+        state: directory
+        mode: '0700'
+
+    - name: Deploy authorized SSH keys
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ item }}"
+        state: present
+      loop: "{{ ssh_authorized_keys }}"

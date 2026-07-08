@@ -1,0 +1,70 @@
+---
+# Rolling update of all hosts with health checks between each.
+# Usage: ansible-playbook playbooks/update-all.yml
+# Tags: update, verify
+#
+# Processes one host at a time. Stops entirely if a host fails its
+# service health check after upgrade.
+
+- name: Update all Debian/Ubuntu hosts (rolling)
+  hosts: linux
+  become: true
+  serial: 1
+  max_fail_percentage: 0
+  tags: [update]
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: dist
+        autoremove: yes
+      register: upgrade_result
+
+    - name: Display upgrade results
+      ansible.builtin.debug:
+        msg: "{{ upgrade_result.stdout_lines | default(['No changes']) }}"
+
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Notify if reboot needed
+      ansible.builtin.debug:
+        msg: "REBOOT REQUIRED on {{ inventory_hostname }}"
+      when: reboot_required.stat.exists
+
+    - name: Verify primary service after upgrade
+      ansible.builtin.shell: "{{ svc_check }}"
+      when: svc_check is defined
+      changed_when: false
+      retries: 3
+      delay: 10
+      tags: [verify]
+
+- name: Update Mac Mini (brew)
+  hosts: macos
+  become: false
+  tags: [update]
+  tasks:
+    - name: Update Homebrew
+      ansible.builtin.command: /opt/homebrew/bin/brew update
+      register: brew_update
+      changed_when: "'Already up-to-date' not in brew_update.stderr"
+
+    - name: Upgrade all brew packages
+      ansible.builtin.command: /opt/homebrew/bin/brew upgrade
+      register: brew_upgrade
+      changed_when: brew_upgrade.stdout | length > 0
+
+    - name: Display brew upgrade results
+      ansible.builtin.debug:
+        msg: "{{ brew_upgrade.stdout_lines | default(['No changes']) }}"
+
+    - name: Cleanup old versions
+      ansible.builtin.command: /opt/homebrew/bin/brew cleanup
+      changed_when: false

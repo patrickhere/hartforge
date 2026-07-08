@@ -1,0 +1,13 @@
+---
+# Deploy Hart Forge MOTD to all Linux hosts.
+# Usage: ansible-playbook playbooks/deploy-motd.yml
+# Or for a single host: ansible-playbook playbooks/deploy-motd.yml --limit <hostname>
+# Tags: motd
+
+- name: Deploy Hart Forge MOTD
+  hosts: linux
+  become: true
+  gather_facts: false
+
+  roles:
+    - motd

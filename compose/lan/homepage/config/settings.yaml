@@ -1,0 +1,32 @@
+title: Hart Dungeon
+theme: dark
+color: slate
+cardBlur: md
+useEqualHeights: true
+hideVersion: true
+statusStyle: dot
+disableCollapse: false
+fiveColumns: false
+background:
+  image: https://images.unsplash.com/photo-1634017839464-5c339afa0df4?auto=format&fit=crop&w=2560&q=80
+  blur: md
+  saturate: 50
+  brightness: 25
+  opacity: 50
+headerStyle: clean
+layout:
+  Media:
+    style: row
+    columns: 3
+  Media Management:
+    style: row
+    columns: 3
+  Infrastructure:
+    style: row
+    columns: 4
+  Apps:
+    style: row
+    columns: 3
+  Monitoring:
+    style: row
+    columns: 4

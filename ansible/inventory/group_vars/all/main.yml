@@ -1,0 +1,39 @@
+---
+# shared defaults for all hosts
+
+timezone: "America/Chicago"
+loki_url: "http://10.1.0.57:3100/loki/api/v1/push"
+grafana_url: "http://10.1.0.57:3000"
+prometheus_config: /opt/monitoring/prometheus.yml
+motd_repo_url: "https://git.hartforge.dev/patrickhere/homelab-scripts/raw/branch/main/motd/motd-linux.sh"
+
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMW/LPEPctc8sALGAE7yeHsPfzAFthzpwmhxoX3gvOSU admin@mac-mini"
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXlAesYJMz8M3SoNeyWb3+md/Q9KBM9Jfou5gU/yT5Y homelab-key@Termix"
+
+base_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+  - jq
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - sudo
+  - cron
+
+docker_log_config:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+
+# ssh hardening defaults
+ssh_max_auth_tries: 3
+ssh_login_grace_time: 30
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2

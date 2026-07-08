@@ -1,0 +1,26 @@
+---
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  tags: [common, base]
+
+- name: Update apt cache and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 3600
+  tags: [common, packages]
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+  tags: [common, packages]
+
+- name: Deploy SSH authorized keys
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ item }}"
+  loop: "{{ ssh_authorized_keys }}"
+  tags: [common, ssh]

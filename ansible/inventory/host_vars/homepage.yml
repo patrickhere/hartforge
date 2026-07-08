@@ -1,0 +1,13 @@
+---
+svc_name: Homepage
+svc_check: "docker ps --filter name=homepage --filter status=running -q | grep -q ."
+svc_port: 3000
+compose_path: /opt/homepage
+
+backup_files:
+  - { src: "/opt/homepage/docker-compose.yaml", dest: "homepage/docker-compose.yaml" }
+  - { src: "/opt/homepage/config/services.yaml", dest: "homepage/config/services.yaml" }
+  - { src: "/opt/homepage/config/settings.yaml", dest: "homepage/config/settings.yaml" }
+  - { src: "/opt/homepage/config/widgets.yaml", dest: "homepage/config/widgets.yaml" }
+  - { src: "/opt/homepage/config/bookmarks.yaml", dest: "homepage/config/bookmarks.yaml" }
+  - { src: "/opt/homepage/config/custom.css", dest: "homepage/config/custom.css" }

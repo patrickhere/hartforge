@@ -1,0 +1,29 @@
+services:
+  calibre-web-automated:
+    image: crocodilestick/calibre-web-automated:v4.0.6
+    container_name: calibre-web-automated
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+      - TRUSTED_PROXY_COUNT=1
+    labels:
+      - autoheal=true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/ || curl -f -k https://localhost:8083/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 60s
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./config:/config
+      - ./library:/calibre-library
+      - ./ingest:/cwa-book-ingest
+      # csrf fix for metadata search (upstream #1266) - survives container recreates
+      - ./patches/search_metadata.py:/app/calibre-web-automated/cps/search_metadata.py:ro
+    ports:
+      - "127.0.0.1:8083:8083"
+    restart: unless-stopped

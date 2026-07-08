@@ -1,0 +1,13 @@
+---
+- name: Check Docker containers on all Docker hosts
+  hosts: media,apps,monitoring,vps
+  become: false
+  tasks:
+    - name: Get running containers
+      command: docker ps --format "table {% raw %}{{.Names}}\t{{.Status}}\t{{.Ports}}{% endraw %}"
+      register: docker_output
+      changed_when: false
+
+    - name: Show containers
+      debug:
+        msg: "{{ docker_output.stdout_lines }}"

@@ -1,0 +1,137 @@
+- Media:
+    - Jellyfin:
+        href: https://jellyfin.hartforge.dev
+        description: Media Server
+        icon: jellyfin
+        widget:
+          type: jellyfin
+          url: http://10.1.0.52:8096
+          key: {{HOMEPAGE_VAR_JELLYFIN_KEY}}
+    - Sonarr:
+        href: https://sonarr.hartforge.dev
+        description: TV Shows
+        icon: sonarr
+        widget:
+          type: sonarr
+          url: http://10.1.0.52:8989
+          key: REDACTED_SONARR_API_KEY
+    - Radarr:
+        href: https://radarr.hartforge.dev
+        description: Movies
+        icon: radarr
+        widget:
+          type: radarr
+          url: http://10.1.0.52:7878
+          key: REDACTED_RADARR_API_KEY
+
+- Media Management:
+    - Seerr:
+        href: https://seerr.hartforge.dev
+        description: Requests
+        icon: overseerr
+        widget:
+          type: overseerr
+          url: http://10.1.0.52:5055
+          key: {{HOMEPAGE_VAR_SEERR_KEY}}
+    - Lidarr:
+        href: https://lidarr.hartforge.dev
+        description: Music
+        icon: lidarr
+        widget:
+          type: lidarr
+          url: http://10.1.0.52:8686
+          key: {{HOMEPAGE_VAR_LIDARR_KEY}}
+    - Bazarr:
+        href: https://bazarr.hartforge.dev
+        description: Subtitles
+        icon: bazarr
+        widget:
+          type: bazarr
+          url: http://10.1.0.52:6767
+          key: {{HOMEPAGE_VAR_BAZARR_KEY}}
+    - Prowlarr:
+        href: https://prowlarr.hartforge.dev
+        description: Indexers
+        icon: prowlarr
+        widget:
+          type: prowlarr
+          url: http://10.1.0.52:9696
+          key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+    - SABnzbd:
+        href: https://sabnzbd.hartforge.dev
+        description: Usenet Downloads
+        icon: sabnzbd
+        widget:
+          type: sabnzbd
+          url: http://10.1.0.52:8080
+          key: {{HOMEPAGE_VAR_SABNZBD_KEY}}
+    - Jellystat:
+        href: https://jellystat.hartforge.dev
+        description: Analytics
+        widget:
+          type: jellystat
+          url: http://10.1.0.52:3000
+          key: {{HOMEPAGE_VAR_JELLYSTAT_KEY}}
+        icon: jellystat
+
+- Infrastructure:
+    - Proxmox:
+        href: https://proxmox.hartforge.dev
+        description: Hypervisor
+        icon: proxmox
+    - NPM:
+        href: https://npm.hartforge.dev
+        description: Reverse Proxy
+        icon: nginx-proxy-manager
+    - Termix:
+        href: https://termix.hartforge.dev
+        description: Web Terminal
+        icon: terminal
+    - UDM Pro Max:
+        href: https://10.1.0.1
+        description: Network Gateway
+        icon: unifi
+
+- Apps:
+    - Kasm:
+        href: https://kasm.hartforge.dev
+        description: Workspaces
+        icon: kasm
+    - Forgejo:
+        href: https://git.hartforge.dev
+        description: Git Server
+        icon: forgejo
+    - Portainer:
+        href: https://portainer.hartforge.dev
+        description: Docker Management
+        icon: portainer
+
+- Monitoring:
+    - Uptime Kuma:
+        href: https://uptime.hartforge.dev
+        description: Status Monitoring
+        icon: uptime-kuma
+        widget:
+          type: uptimekuma
+          url: http://10.1.0.53:3001
+          slug: status
+    - Grafana:
+        href: https://grafana.hartforge.dev
+        description: Dashboards
+        icon: grafana
+        widget:
+          type: grafana
+          url: http://10.1.0.57:3000
+          username: admin
+          password: REDACTED_GRAFANA_PASS
+    - Dozzle:
+        href: https://logs.hartforge.dev
+        description: Container Logs
+        icon: dozzle
+    - Prometheus:
+        href: https://prometheus.hartforge.dev
+        description: Metrics
+        icon: prometheus
+        widget:
+          type: prometheus
+          url: http://10.1.0.57:9090

@@ -1,0 +1,108 @@
+---
+# Deploy Docker Compose stacks from homelab-compose repo.
+# Usage: ansible-playbook playbooks/deploy-compose.yml --limit <hostname>
+#   -e compose_repo=~/Documents/homelab-compose   (default)
+#   -e service_dir=monitoring                       Override compose subdir
+#
+# Requires: compose_path defined in host_vars (target deploy path on host)
+# Tags: deploy, pull, health
+
+- name: Deploy Docker Compose stack
+  hosts: docker
+  become: true
+  gather_facts: false
+  vars:
+    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/homelab-compose"
+    service_dir: ""
+
+  tasks:
+    - name: Validate compose_path is defined
+      ansible.builtin.assert:
+        that: compose_path is defined
+        fail_msg: "No compose_path defined in host_vars for {{ inventory_hostname }}"
+      tags: [deploy]
+
+    - name: Determine local compose source directory
+      ansible.builtin.set_fact:
+        local_compose_dir: "{{ compose_repo }}/{{ service_dir if service_dir else inventory_hostname }}"
+      tags: [deploy]
+
+    - name: Check local compose directory exists
+      ansible.builtin.stat:
+        path: "{{ local_compose_dir }}"
+      delegate_to: localhost
+      become: false
+      register: compose_dir_check
+      tags: [deploy]
+
+    - name: Fail if compose directory not found
+      ansible.builtin.fail:
+        msg: "Compose directory not found: {{ local_compose_dir }}"
+      when: not compose_dir_check.stat.exists
+      tags: [deploy]
+
+    - name: Backup current compose file
+      ansible.builtin.shell: >
+        cp {{ compose_path }}/docker-compose.y*ml
+        {{ compose_path }}/docker-compose.bak 2>/dev/null || true
+      changed_when: false
+      tags: [deploy]
+
+    - name: Sync compose files to host
+      ansible.posix.synchronize:
+        src: "{{ local_compose_dir }}/"
+        dest: "{{ compose_path }}/"
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=.env.example"
+      tags: [deploy]
+
+    - name: Pull latest images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: "{{ compose_path }}"
+      changed_when: true
+      tags: [deploy, pull]
+
+    - name: Bring up compose stack
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: "{{ compose_path }}"
+      register: compose_up
+      tags: [deploy]
+
+    - name: Wait for service to stabilize
+      ansible.builtin.pause:
+        seconds: 10
+      tags: [deploy, health]
+
+    - name: Verify primary service
+      ansible.builtin.shell: "{{ svc_check }}"
+      when: svc_check is defined
+      changed_when: false
+      register: health_result
+      tags: [deploy, health]
+
+    - name: Rollback on failure
+      when: health_result is defined and health_result.rc | default(0) != 0
+      block:
+        - name: Restore backup compose file
+          ansible.builtin.shell: >
+            mv {{ compose_path }}/docker-compose.bak
+            {{ compose_path }}/docker-compose.yml
+          changed_when: true
+
+        - name: Redeploy previous version
+          ansible.builtin.command:
+            cmd: docker compose up -d
+            chdir: "{{ compose_path }}"
+
+        - name: Report rollback
+          ansible.builtin.fail:
+            msg: "Deployment failed health check, rolled back to previous version"
+      tags: [deploy]
+
+    - name: Report success
+      ansible.builtin.debug:
+        msg: "Deployed {{ inventory_hostname }} from {{ local_compose_dir }}"
+      tags: [deploy]

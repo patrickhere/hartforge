@@ -1,0 +1,16 @@
+services:
+  beszel-agent:
+    image: henrygd/beszel-agent:0.18.7
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    mem_limit: 64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PORT: '45876'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGgO9vRTsWK/pEov7Zw8ce63V/ZCX1IOSTPXTetnp8/F'

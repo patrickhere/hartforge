@@ -1,0 +1,87 @@
+---
+# Clean up disk space on target hosts.
+# Usage: ansible-playbook playbooks/disk-cleanup.yml --limit <hostname>
+#   Or: ansible-playbook playbooks/disk-cleanup.yml  (all linux hosts)
+# Tags: cleanup, docker, apt, logs
+
+- name: Disk cleanup
+  hosts: linux
+  become: true
+  gather_facts: false
+  tags: [cleanup]
+
+  tasks:
+    - name: Record disk usage before cleanup
+      ansible.builtin.shell: df -h / | tail -1
+      register: disk_before
+      changed_when: false
+
+    - name: Clean apt cache
+      ansible.builtin.apt:
+        autoclean: true
+      tags: [apt]
+
+    - name: Remove unnecessary packages
+      ansible.builtin.apt:
+        autoremove: true
+      tags: [apt]
+
+    - name: Rotate journal logs (keep 7 days)
+      ansible.builtin.command: journalctl --vacuum-time=7d
+      changed_when: true
+      tags: [logs]
+
+    - name: Remove old rotated logs
+      ansible.builtin.shell: >
+        find /var/log -name '*.gz' -mtime +30 -delete 2>/dev/null;
+        find /var/log -name '*.1' -mtime +30 -delete 2>/dev/null;
+        true
+      changed_when: true
+      tags: [logs]
+
+    - name: Remove old tmp files
+      ansible.builtin.shell: find /tmp -mtime +7 -type f -delete 2>/dev/null; true
+      changed_when: true
+      tags: [cleanup]
+
+- name: Docker cleanup on Docker hosts
+  hosts: docker
+  become: true
+  gather_facts: false
+  tags: [cleanup, docker]
+
+  tasks:
+    - name: Prune unused Docker images (older than 30 days)
+      community.docker.docker_prune:
+        images: true
+        images_filters:
+          dangling: false
+          until: "720h"
+        containers: true
+        networks: true
+        builder_cache: true
+      register: prune_result
+
+    - name: Report Docker prune results
+      ansible.builtin.debug:
+        msg: >-
+          Reclaimed: images={{ prune_result.images_space_reclaimed | default(0) | human_readable }},
+          build_cache={{ prune_result.builder_cache_space_reclaimed | default(0) | human_readable }}
+
+- name: Report results
+  hosts: linux
+  become: true
+  gather_facts: false
+  tags: [cleanup]
+
+  tasks:
+    - name: Record disk usage after cleanup
+      ansible.builtin.shell: df -h / | tail -1
+      register: disk_after
+      changed_when: false
+
+    - name: Report before/after
+      ansible.builtin.debug:
+        msg:
+          - "Before: {{ disk_before.stdout }}"
+          - "After:  {{ disk_after.stdout }}"

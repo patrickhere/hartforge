@@ -1,0 +1,44 @@
+---
+# Add a new host to Prometheus scrape targets and reload.
+# Usage: ansible-playbook playbooks/register-monitoring.yml -e "target_host=10.1.0.XX target_name=hostname"
+
+- name: Register new host in monitoring
+  hosts: monitoring-lxc
+  become: true
+  vars:
+    target_host: ""
+    target_name: ""
+    prometheus_config: /opt/monitoring/prometheus.yml
+
+  tasks:
+    - name: Validate inputs
+      assert:
+        that:
+          - target_host | length > 0
+          - target_name | length > 0
+        fail_msg: "Provide -e target_host=10.1.0.XX -e target_name=hostname"
+
+    - name: Check if target already exists in prometheus.yml
+      command: grep -q "{{ target_host }}" {{ prometheus_config }}
+      register: already_exists
+      changed_when: false
+      failed_when: false
+
+    - name: Add node-exporter target to prometheus.yml
+      when: already_exists.rc != 0
+      lineinfile:
+        path: "{{ prometheus_config }}"
+        insertafter: "job_name.*node"
+        line: "        - targets: ['{{ target_host }}:9100']  # {{ target_name }}"
+      notify: reload prometheus
+
+    - name: Report
+      debug:
+        msg: "{{ 'Already registered' if already_exists.rc == 0 else 'Added ' + target_name + ' (' + target_host + ':9100) to Prometheus' }}"
+
+  handlers:
+    - name: reload prometheus
+      uri:
+        url: http://localhost:9090/-/reload
+        method: POST
+        status_code: [200, 204]

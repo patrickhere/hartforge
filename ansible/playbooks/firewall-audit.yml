@@ -1,0 +1,50 @@
+---
+# Read-only firewall and port audit across all hosts.
+# Usage: ansible-playbook playbooks/firewall-audit.yml
+# Tags: audit, firewall, ports
+
+- name: Firewall and port audit
+  hosts: linux
+  become: true
+  gather_facts: false
+  tags: [audit, firewall]
+
+  tasks:
+    - name: Get listening ports
+      ansible.builtin.shell: ss -tlnp | tail -n +2
+      register: listening_ports
+      changed_when: false
+
+    - name: Get iptables rules
+      ansible.builtin.shell: iptables -L INPUT -n --line-numbers 2>/dev/null || echo "no iptables"
+      register: iptables_rules
+      changed_when: false
+
+    - name: Check for UFW
+      ansible.builtin.shell: ufw status 2>/dev/null || echo "ufw not installed"
+      register: ufw_status
+      changed_when: false
+
+    - name: Report listening ports
+      ansible.builtin.debug:
+        msg:
+          - "--- {{ inventory_hostname }} listening ports ---"
+          - "{{ listening_ports.stdout_lines }}"
+
+    - name: Report firewall rules
+      ansible.builtin.debug:
+        msg:
+          - "--- {{ inventory_hostname }} iptables ---"
+          - "{{ iptables_rules.stdout_lines }}"
+          - "--- UFW ---"
+          - "{{ ufw_status.stdout_lines }}"
+
+    - name: Check for ports bound to 0.0.0.0 (potential exposure)
+      ansible.builtin.shell: ss -tlnp | grep '0.0.0.0:' | grep -v '127.0.0.1' || true
+      register: exposed_ports
+      changed_when: false
+
+    - name: Warn about externally-bound ports
+      ansible.builtin.debug:
+        msg: "WARNING: {{ inventory_hostname }} has ports bound to 0.0.0.0 -- {{ exposed_ports.stdout_lines }}"
+      when: exposed_ports.stdout | length > 0

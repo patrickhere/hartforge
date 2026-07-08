@@ -1,0 +1,17 @@
+---
+timezone: "America/Chicago"
+base_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+  - jq
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - sudo
+  - cron
+ssh_authorized_keys: []

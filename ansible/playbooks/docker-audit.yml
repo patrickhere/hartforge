@@ -1,0 +1,55 @@
+---
+# Audit Docker security posture across all Docker hosts.
+# Usage: ansible-playbook playbooks/docker-audit.yml
+# Tags: audit, docker, security
+
+- name: Docker security audit
+  hosts: docker
+  become: false
+  gather_facts: false
+  tags: [audit, docker, security]
+
+  tasks:
+    - name: Find containers running as root
+      ansible.builtin.shell: >
+        docker ps -q | xargs -I {} docker inspect --format
+        '{% raw %}{{.Name}} user={{.Config.User}}{% endraw %}' {} 2>/dev/null |
+        grep -E 'user=$|user=0|user=root' || echo "none"
+      register: root_containers
+      changed_when: false
+
+    - name: Find privileged containers
+      ansible.builtin.shell: >
+        docker ps -q | xargs -I {} docker inspect --format
+        '{% raw %}{{.Name}} privileged={{.HostConfig.Privileged}}{% endraw %}' {} 2>/dev/null |
+        grep 'privileged=true' || echo "none"
+      register: privileged_containers
+      changed_when: false
+
+    - name: Find containers without resource limits
+      ansible.builtin.shell: >
+        docker ps -q | xargs -I {} docker inspect --format
+        '{% raw %}{{.Name}} mem={{.HostConfig.Memory}} cpu={{.HostConfig.NanoCpus}}{% endraw %}' {} 2>/dev/null |
+        grep 'mem=0 cpu=0' || echo "none"
+      register: no_limits
+      changed_when: false
+
+    - name: Find containers with ports on 0.0.0.0
+      ansible.builtin.shell: >
+        docker ps --format '{% raw %}{{.Names}}: {{.Ports}}{% endraw %}' |
+        grep '0.0.0.0:' || echo "none"
+      register: exposed_containers
+      changed_when: false
+
+    - name: Report security findings
+      ansible.builtin.debug:
+        msg:
+          - "=== {{ inventory_hostname }} Docker Security Audit ==="
+          - "--- Containers running as root ---"
+          - "{{ root_containers.stdout_lines }}"
+          - "--- Privileged containers ---"
+          - "{{ privileged_containers.stdout_lines }}"
+          - "--- No resource limits ---"
+          - "{{ no_limits.stdout_lines }}"
+          - "--- Ports bound to 0.0.0.0 ---"
+          - "{{ exposed_containers.stdout_lines }}"

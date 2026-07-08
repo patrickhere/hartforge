@@ -1,0 +1,9 @@
+---
+svc_name: Caddy
+svc_check: "systemctl is-active caddy"
+svc_port: 443
+subdomain: null
+
+backup_files:
+  - { src: "/etc/caddy/Caddyfile", dest: "caddy/Caddyfile" }
+  - { src: "/etc/caddy/environment", dest: "caddy/environment" }

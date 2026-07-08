@@ -1,0 +1,66 @@
+---
+# Health check all hosts. Read-only, safe to run anytime.
+# Usage: ansible-playbook playbooks/health-check.yml
+# Tags: health, docker
+
+- name: Health check all hosts
+  hosts: linux
+  become: false
+  gather_facts: yes
+  tags: [health]
+  tasks:
+    - name: Get uptime
+      ansible.builtin.command: uptime
+      register: uptime_result
+      changed_when: false
+
+    - name: Get memory usage
+      ansible.builtin.command: free -h
+      register: memory_result
+      changed_when: false
+
+    - name: Get disk usage
+      ansible.builtin.command: df -h /
+      register: disk_result
+      changed_when: false
+
+    - name: Print health summary
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ ansible_hostname }}"
+          - "Uptime: {{ uptime_result.stdout }}"
+          - "Memory: {{ memory_result.stdout_lines[1] }}"
+          - "Disk: {{ disk_result.stdout_lines[1] }}"
+
+    - name: Verify primary service
+      ansible.builtin.shell: "{{ svc_check }}"
+      when: svc_check is defined
+      changed_when: false
+      failed_when: false
+      register: svc_result
+
+    - name: Report service status
+      ansible.builtin.debug:
+        msg: "{{ svc_name | default(inventory_hostname) }}: {{ 'OK' if svc_result.rc | default(0) == 0 else 'FAILED' }}"
+      when: svc_check is defined
+
+- name: Check Docker hosts
+  hosts: docker
+  become: false
+  tags: [docker]
+  tasks:
+    - name: Get container count
+      ansible.builtin.shell: docker ps -q | wc -l
+      register: container_count
+      changed_when: false
+
+    - name: Get unhealthy containers
+      ansible.builtin.shell: docker ps --filter "health=unhealthy" --format "{% raw %}{{.Names}}{% endraw %}" || true
+      register: unhealthy
+      changed_when: false
+
+    - name: Print Docker summary
+      ansible.builtin.debug:
+        msg:
+          - "Running containers: {{ container_count.stdout }}"
+          - "Unhealthy: {{ unhealthy.stdout | default('none') }}"

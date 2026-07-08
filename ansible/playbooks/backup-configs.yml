@@ -1,0 +1,222 @@
+---
+- name: Backup all homelab configs
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    backup_dir: "{{ playbook_dir }}/../backups/{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+    grafana_url: "http://10.1.0.57:3000"
+    grafana_user: "admin"
+    # SSH errors that indicate host is down (not data issues)
+    ssh_errors:
+      - "Connection refused"
+      - "No route to host"
+      - "Connection timed out"
+      - "Could not resolve hostname"
+      - "Network is unreachable"
+  vars_files:
+    - ../vars/secrets.yml
+
+  tasks:
+    - name: Create backup directories
+      file:
+        path: "{{ backup_dir }}/{{ item }}"
+        state: directory
+      loop:
+        - caddy
+        - yams
+        - uptime-kuma
+        - homepage/config
+        - forgejo
+        - monitoring
+        - grafana-dashboards
+        - vps
+        - immich
+
+    # --- caddy / NPM (10.1.0.51) ---
+    - name: Backup caddy configs
+      shell: "scp root@10.1.0.51:{{ item.src }} {{ backup_dir }}/caddy/{{ item.dest }}"
+      loop:
+        - { src: "/etc/caddy/Caddyfile", dest: "Caddyfile" }
+        - { src: "/etc/caddy/environment", dest: "environment" }
+      register: caddy_result
+      failed_when: >
+        caddy_result.results | default([caddy_result]) |
+        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
+        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+
+    # --- yams (10.1.0.52) ---
+    - name: Backup yams configs
+      shell: "scp root@10.1.0.52:{{ item.src }} {{ backup_dir }}/yams/{{ item.dest }}"
+      loop:
+        - { src: "/opt/yams/docker-compose.custom.yaml", dest: "docker-compose.custom.yaml" }
+        - { src: "/opt/yams/.env", dest: ".env" }
+        - { src: "/opt/yams/config/recyclarr/recyclarr.yml", dest: "recyclarr.yml" }
+        - { src: "/opt/yams/config/alloy/config.alloy", dest: "alloy-config.alloy" }
+      register: yams_result
+      failed_when: >
+        yams_result.results | default([yams_result]) |
+        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
+        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+
+    # --- uptime-kuma (10.1.0.53) ---
+    - name: Backup uptime-kuma compose
+      shell: "scp root@10.1.0.53:/opt/uptime-kuma/docker-compose.yaml {{ backup_dir }}/uptime-kuma/docker-compose.yaml"
+      register: uptime_kuma_result
+      failed_when: >
+        uptime_kuma_result.rc != 0
+        and not (uptime_kuma_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    # --- homepage (10.1.0.54) ---
+    - name: Backup homepage configs
+      shell: "scp root@10.1.0.54:/opt/homepage/config/{{ item }} {{ backup_dir }}/homepage/config/{{ item }}"
+      loop:
+        - services.yaml
+        - settings.yaml
+        - widgets.yaml
+        - bookmarks.yaml
+        - custom.css
+      register: homepage_configs_result
+      failed_when: >
+        homepage_configs_result.results | default([homepage_configs_result]) |
+        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
+        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+
+    - name: Backup homepage compose
+      shell: "scp root@10.1.0.54:/opt/homepage/docker-compose.yaml {{ backup_dir }}/homepage/docker-compose.yaml"
+      register: homepage_compose_result
+      failed_when: >
+        homepage_compose_result.rc != 0
+        and not (homepage_compose_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    # --- forgejo (10.1.0.56) ---
+    - name: Backup forgejo compose
+      shell: "scp root@10.1.0.56:/opt/forgejo/docker-compose.yaml {{ backup_dir }}/forgejo/docker-compose.yaml"
+      register: forgejo_compose_result
+      failed_when: >
+        forgejo_compose_result.rc != 0
+        and not (forgejo_compose_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    - name: Run forgejo dump
+      shell: >
+        ssh root@10.1.0.56 'cd /opt/forgejo &&
+        docker compose exec -T -u git forgejo forgejo dump -c /data/gitea/conf/app.ini -f /tmp/forgejo-dump.zip &&
+        docker cp forgejo:/tmp/forgejo-dump.zip /tmp/forgejo-dump.zip &&
+        docker compose exec -T forgejo rm -f /tmp/forgejo-dump.zip' &&
+        scp root@10.1.0.56:/tmp/forgejo-dump.zip {{ backup_dir }}/forgejo/forgejo-dump.zip &&
+        ssh root@10.1.0.56 'rm -f /tmp/forgejo-dump.zip'
+      register: forgejo_dump_result
+      ignore_errors: true
+
+    - name: Warn if forgejo dump failed
+      debug:
+        msg: "WARNING: Forgejo dump failed -- {{ forgejo_dump_result.stderr | default('unknown error') }}"
+      when: forgejo_dump_result is failed
+
+    # --- monitoring (10.1.0.57) ---
+    - name: Backup monitoring configs
+      shell: "scp root@10.1.0.57:{{ item.src }} {{ backup_dir }}/monitoring/{{ item.dest }}"
+      loop:
+        - { src: "/opt/monitoring/docker-compose.yaml", dest: "docker-compose.yaml" }
+        - { src: "/opt/monitoring/prometheus.yml", dest: "prometheus.yml" }
+        - { src: "/opt/monitoring/loki-config.yml", dest: "loki-config.yml" }
+        - { src: "/opt/monitoring/alloy-config.alloy", dest: "alloy-config.alloy" }
+      register: monitoring_result
+      failed_when: >
+        monitoring_result.results | default([monitoring_result]) |
+        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
+        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+
+    # --- VPS (100.70.8.13 via Tailscale) ---
+    - name: Create VPS config archive
+      shell: >
+        ssh root@100.70.8.13
+        'tar czf /tmp/vps-configs-backup.tar.gz
+        /opt/authentik/docker-compose.yml /opt/authentik/.env
+        /opt/uptime-kuma/ /opt/forgejo/ /opt/ntfy/ /opt/alloy/
+        2>/dev/null'
+      register: vps_archive_result
+      failed_when: >
+        vps_archive_result.rc != 0
+        and not (vps_archive_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    - name: Fetch VPS config archive
+      shell: "scp root@100.70.8.13:/tmp/vps-configs-backup.tar.gz {{ backup_dir }}/vps/vps-configs.tar.gz"
+      register: vps_fetch_result
+      failed_when: >
+        vps_fetch_result.rc != 0
+        and not (vps_fetch_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    # --- immich (10.1.0.59) ---
+    - name: Backup immich configs
+      shell: "scp root@10.1.0.59:{{ item.src }} {{ backup_dir }}/immich/{{ item.dest }}"
+      loop:
+        - { src: "/opt/immich/.env", dest: ".env" }
+        - { src: "/opt/immich/docker-compose.yml", dest: "docker-compose.yml" }
+      register: immich_result
+      failed_when: >
+        immich_result.results | default([immich_result]) |
+        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
+        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+      tags: [immich]
+
+    - name: Backup immich database dump
+      shell: >
+        ssh root@10.1.0.59 '/opt/immich/backup-db.sh' &&
+        scp root@10.1.0.59:/opt/immich/backups/immich-db-$(date +%Y-%m-%d).sql.gz
+        {{ backup_dir }}/immich/immich-db-latest.sql.gz
+      register: immich_db_result
+      ignore_errors: true
+      tags: [immich]
+
+    - name: Warn if immich DB backup failed
+      debug:
+        msg: "WARNING: Immich DB backup failed -- {{ immich_db_result.stderr | default('unknown error') }}"
+      when: immich_db_result is failed
+
+    # --- Backup validation ---
+    - name: Validate critical backup files exist
+      stat:
+        path: "{{ backup_dir }}/{{ item.path }}"
+      register: validation
+      loop:
+        - { path: "caddy/Caddyfile", name: "Caddy config" }
+        - { path: "forgejo/forgejo-dump.zip", name: "Forgejo dump" }
+        - { path: "vps/vps-configs.tar.gz", name: "VPS archive" }
+        - { path: "monitoring/prometheus.yml", name: "Prometheus config" }
+        - { path: "immich/.env", name: "Immich config" }
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Report missing critical backups
+      debug:
+        msg: "MISSING: {{ item.item.name }} ({{ item.item.path }})"
+      loop: "{{ validation.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: not item.stat.exists
+      failed_when: not item.stat.exists
+
+    # --- Grafana dashboard export ---
+    - name: Get all Grafana dashboards
+      uri:
+        url: "{{ grafana_url }}/api/search?type=dash-db"
+        user: "{{ grafana_user }}"
+        password: "{{ grafana_pass }}"
+        force_basic_auth: true
+      register: dashboards
+
+    - name: Export each Grafana dashboard
+      uri:
+        url: "{{ grafana_url }}/api/dashboards/uid/{{ item.uid }}"
+        user: "{{ grafana_user }}"
+        password: "{{ grafana_pass }}"
+        force_basic_auth: true
+        dest: "{{ backup_dir }}/grafana-dashboards/{{ item.uid }}.json"
+      loop: "{{ dashboards.json }}"
+      loop_control:
+        label: "{{ item.title }}"
+
+    - name: Print backup summary
+      debug:
+        msg: "Backup completed to {{ backup_dir }}"

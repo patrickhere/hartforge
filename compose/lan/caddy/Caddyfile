@@ -1,0 +1,284 @@
+{
+	order crowdsec first
+
+	log default {
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 5
+		}
+		format json
+	}
+
+	crowdsec {
+		api_url http://localhost:8080
+		api_key {env.CROWDSEC_API_KEY}
+		ticker_interval 15s
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+(authentik) {
+	forward_auth http://100.70.8.13:9000 {
+		uri /outpost.goauthentik.io/auth/caddy
+		copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid
+		header_up X-Forwarded-Host {host}
+		trusted_proxies private_ranges
+	}
+}
+
+*.hartforge.dev {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+		resolvers 1.1.1.1
+		propagation_timeout 35m
+	}
+
+	log
+	import security_headers
+	crowdsec
+
+	# --- Media ---
+
+	@jellyfin host jellyfin.hartforge.dev
+	handle @jellyfin {
+		reverse_proxy http://10.1.0.52:8096
+	}
+
+	@seerr host seerr.hartforge.dev
+	handle @seerr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:5055
+
+			import authentik
+			reverse_proxy http://10.1.0.52:5055
+		}
+	}
+
+	@jellystat host jellystat.hartforge.dev
+	handle @jellystat {
+		reverse_proxy http://10.1.0.52:3000
+	}
+
+	@ersatztv host tv.hartforge.dev
+	handle @ersatztv {
+		import authentik
+		reverse_proxy http://10.1.0.52:8000
+	}
+
+	# --- Media Management ---
+
+	@sonarr host sonarr.hartforge.dev
+	handle @sonarr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:8989
+
+			import authentik
+			reverse_proxy http://10.1.0.52:8989
+		}
+	}
+
+	@radarr host radarr.hartforge.dev
+	handle @radarr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:7878
+
+			import authentik
+			reverse_proxy http://10.1.0.52:7878
+		}
+	}
+
+	@lidarr host lidarr.hartforge.dev
+	handle @lidarr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:8686
+
+			import authentik
+			reverse_proxy http://10.1.0.52:8686
+		}
+	}
+
+	@bazarr host bazarr.hartforge.dev
+	handle @bazarr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:6767
+
+			import authentik
+			reverse_proxy http://10.1.0.52:6767
+		}
+	}
+
+	@prowlarr host prowlarr.hartforge.dev
+	handle @prowlarr {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.52:9696
+
+			import authentik
+			reverse_proxy http://10.1.0.52:9696
+		}
+	}
+
+	@sabnzbd host sabnzbd.hartforge.dev
+	handle @sabnzbd {
+		import authentik
+		reverse_proxy http://10.1.0.52:8080
+	}
+
+	@qbit host qbit.hartforge.dev
+	handle @qbit {
+		import authentik
+		reverse_proxy http://10.1.0.52:8081
+	}
+
+	@profilarr host profilarr.hartforge.dev
+	handle @profilarr {
+		import authentik
+		reverse_proxy http://10.1.0.52:6868
+	}
+
+	@posterizarr host poster.hartforge.dev
+	handle @posterizarr {
+		import authentik
+		reverse_proxy http://10.1.0.52:8400
+	}
+
+	# --- Infrastructure ---
+
+	@proxmox host proxmox.hartforge.dev
+	handle @proxmox {
+		reverse_proxy https://10.1.0.50:8006 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	# --- Monitoring ---
+
+	@uptime host uptime.hartforge.dev
+	handle @uptime {
+		import authentik
+		reverse_proxy http://10.1.0.53:3001
+	}
+
+	@grafana host grafana.hartforge.dev
+	handle @grafana {
+		route {
+			@api path /api/*
+			reverse_proxy @api http://10.1.0.57:3000
+
+			import authentik
+			reverse_proxy http://10.1.0.57:3000
+		}
+	}
+
+	@prometheus host prometheus.hartforge.dev
+	handle @prometheus {
+		import authentik
+		reverse_proxy http://10.1.0.57:9090
+	}
+
+	@logs host logs.hartforge.dev
+	handle @logs {
+		import authentik
+		reverse_proxy http://10.1.0.52:9999
+	}
+
+	# --- Apps ---
+
+	@home host home.hartforge.dev
+	handle @home {
+		import authentik
+		reverse_proxy http://10.1.0.54:3000
+	}
+
+	@git host git.hartforge.dev
+	handle @git {
+		reverse_proxy http://10.1.0.56:3000
+	}
+
+	@gitmirror host git-mirror.hartforge.dev
+	handle @gitmirror {
+		reverse_proxy http://10.1.0.56:3000
+	}
+
+	@termix host termix.hartforge.dev
+	handle @termix {
+		reverse_proxy http://10.1.0.55:8080
+	}
+
+	@paimon host paimon.hartforge.dev
+	handle @paimon {
+		import authentik
+		reverse_proxy http://10.1.0.81:4822 {
+			flush_interval -1
+		}
+	}
+
+	@photos host photos.hartforge.dev
+	handle @photos {
+		request_body {
+			max_size 50GB
+		}
+		reverse_proxy http://10.1.0.59:2283 {
+			transport http {
+				read_timeout 600s
+				write_timeout 600s
+			}
+		}
+	}
+
+	@tdarr host tdarr.hartforge.dev
+	handle @tdarr {
+		import authentik
+		reverse_proxy http://10.1.0.52:8265
+	}
+
+	@wizarr host wizarr.hartforge.dev
+	handle @wizarr {
+		reverse_proxy http://10.1.0.52:5690
+	}
+
+	@tracearr host tracearr.hartforge.dev
+	handle @tracearr {
+		import authentik
+		reverse_proxy http://10.1.0.52:3001
+	}
+
+	@adguard host adguard.hartforge.dev
+	handle @adguard {
+		reverse_proxy http://10.1.0.10:80
+	}
+
+	@phototools host photo-tools.hartforge.dev
+	handle @phototools {
+		import authentik
+		reverse_proxy http://10.1.0.59:3006
+	}
+
+	@semaphore host semaphore.hartforge.dev
+	handle @semaphore {
+		import authentik
+		reverse_proxy http://10.1.0.81:3100
+	}
+
+	# Fallback for unmatched subdomains
+	handle {
+		respond "Not Found" 404
+	}
+}

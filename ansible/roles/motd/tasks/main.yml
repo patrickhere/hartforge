@@ -1,0 +1,45 @@
+---
+- name: Remove default MOTD scripts
+  ansible.builtin.file:
+    path: "/etc/update-motd.d/{{ item }}"
+    state: absent
+  loop:
+    - 10-uname
+    - 50-motd-news
+    - 92-unattended-upgrades
+  failed_when: false
+  tags: [motd]
+
+- name: Download Hart Forge MOTD script
+  ansible.builtin.get_url:
+    url: "{{ motd_repo_url }}"
+    dest: /etc/update-motd.d/10-hartforge
+    mode: '0755'
+    force: true
+  tags: [motd]
+
+- name: Create hartforge.conf for service check
+  ansible.builtin.copy:
+    dest: /etc/hartforge.conf
+    content: |
+      SVC_NAME="{{ svc_name | default('') }}"
+      SVC_CHECK="{{ svc_check | default('') }}"
+    mode: '0644'
+  when: svc_name is defined
+  tags: [motd]
+
+- name: Disable default Debian MOTD
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent
+  failed_when: false
+  tags: [motd]
+
+- name: Ensure pam_motd runs update-motd.d scripts
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: 'pam_motd.so.*motd=/run/motd.dynamic'
+    line: 'session    optional     pam_motd.so  motd=/run/motd.dynamic'
+    state: present
+  failed_when: false
+  tags: [motd]

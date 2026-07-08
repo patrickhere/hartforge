@@ -1,0 +1,73 @@
+---
+# Detect config drift between live hosts and homelab-compose repo.
+# Usage: ansible-playbook playbooks/config-drift.yml
+# Tags: audit, drift
+#
+# Compares checksums of key config files on hosts against local git-tracked versions.
+
+- name: Config drift detection
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tags: [audit, drift]
+  vars:
+    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/homelab-compose"
+    drift_found: []
+    checks:
+      - name: "Caddy - Caddyfile"
+        host: "root@10.1.0.51"
+        remote: "/etc/caddy/Caddyfile"
+        local: "{{ compose_repo }}/caddy/Caddyfile"
+      - name: "Monitoring - docker-compose"
+        host: "root@10.1.0.57"
+        remote: "/opt/monitoring/docker-compose.yaml"
+        local: "{{ compose_repo }}/monitoring/docker-compose.yaml"
+      - name: "Monitoring - prometheus.yml"
+        host: "root@10.1.0.57"
+        remote: "/opt/monitoring/prometheus.yml"
+        local: "{{ compose_repo }}/monitoring/prometheus.yml"
+      - name: "Homepage - docker-compose"
+        host: "root@10.1.0.54"
+        remote: "/opt/homepage/docker-compose.yaml"
+        local: "{{ compose_repo }}/homepage/docker-compose.yaml"
+      - name: "Uptime Kuma - docker-compose"
+        host: "root@10.1.0.53"
+        remote: "/opt/uptime-kuma/docker-compose.yaml"
+        local: "{{ compose_repo }}/uptime-kuma/docker-compose.yaml"
+      - name: "Forgejo - docker-compose"
+        host: "root@10.1.0.56"
+        remote: "/opt/forgejo/docker-compose.yaml"
+        local: "{{ compose_repo }}/forgejo/docker-compose.yaml"
+
+  tasks:
+    - name: Get remote file checksums
+      ansible.builtin.shell: "ssh {{ item.host }} 'sha256sum {{ item.remote }} 2>/dev/null' | awk '{print $1}'"
+      loop: "{{ checks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: remote_hashes
+      changed_when: false
+      failed_when: false
+
+    - name: Get local file checksums
+      ansible.builtin.shell: "sha256sum {{ item.local }} 2>/dev/null | awk '{print $1}'"
+      loop: "{{ checks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: local_hashes
+      changed_when: false
+      failed_when: false
+
+    - name: Compare checksums
+      ansible.builtin.debug:
+        msg: >-
+          {{ 'DRIFT' if remote_hashes.results[idx].stdout != local_hashes.results[idx].stdout
+             and remote_hashes.results[idx].stdout | length > 0
+             and local_hashes.results[idx].stdout | length > 0
+             else 'OK' if remote_hashes.results[idx].stdout | length > 0
+             else 'SKIP (file missing)' }}:
+          {{ item.name }}
+      loop: "{{ checks }}"
+      loop_control:
+        label: "{{ item.name }}"
+        index_var: idx

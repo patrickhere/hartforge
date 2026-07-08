@@ -1,0 +1,85 @@
+---
+# Harden SSH configuration across all Linux hosts.
+# Usage: ansible-playbook playbooks/ssh-hardening.yml
+# Use --check --diff to preview changes before applying.
+#
+# Defaults defined in group_vars/all.yml:
+#   ssh_max_auth_tries, ssh_login_grace_time,
+#   ssh_client_alive_interval, ssh_client_alive_count_max
+
+- name: Harden SSH configuration
+  hosts: linux
+  become: true
+  gather_facts: false
+  tags: [security, ssh]
+
+  tasks:
+    - name: Ensure PasswordAuthentication is disabled
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Ensure PermitRootLogin is prohibit-password
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin prohibit-password'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Set MaxAuthTries
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?MaxAuthTries'
+        line: 'MaxAuthTries {{ ssh_max_auth_tries }}'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Set LoginGraceTime
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?LoginGraceTime'
+        line: 'LoginGraceTime {{ ssh_login_grace_time }}'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Set ClientAliveInterval
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ClientAliveInterval'
+        line: 'ClientAliveInterval {{ ssh_client_alive_interval }}'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Set ClientAliveCountMax
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ClientAliveCountMax'
+        line: 'ClientAliveCountMax {{ ssh_client_alive_count_max }}'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Disable X11Forwarding
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?X11Forwarding'
+        line: 'X11Forwarding no'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+    - name: Disable AllowTcpForwarding
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?AllowTcpForwarding'
+        line: 'AllowTcpForwarding no'
+        validate: 'sshd -t -f %s'
+      notify: restart sshd
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.systemd:
+        name: sshd
+        state: restarted

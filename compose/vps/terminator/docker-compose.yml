@@ -1,0 +1,20 @@
+services:
+  terminator:
+    image: deeplerg/terminator:0.1.3
+    container_name: terminator
+    restart: unless-stopped
+    mem_limit: 128m
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:8787:8080"
+    volumes:
+      - terminator-data:/app/data
+    environment:
+      - DefaultAdmin__Username=patrick
+      - DefaultAdmin__Password=changeme-on-first-login
+      - AuthSettings__ExpirationDays=30
+      - UserSettings__DefaultAccountType=Full
+
+volumes:
+  terminator-data:

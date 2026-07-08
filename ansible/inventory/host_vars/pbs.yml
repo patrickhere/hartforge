@@ -1,0 +1,4 @@
+---
+svc_name: PBS
+svc_check: "systemctl is-active proxmox-backup-proxy"
+svc_port: 8007

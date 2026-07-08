@@ -1,0 +1,14 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    volumes:
+      - /opt/homepage/config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - .env
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=home.hartforge.dev,10.1.0.54,localhost
+    restart: unless-stopped

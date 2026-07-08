@@ -1,0 +1,14 @@
+services:
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    container_name: semaphore
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    env_file: .env
+    volumes:
+      - semaphore-data:/var/lib/semaphore
+      - /Users/admin/.ssh:/home/semaphore/.ssh:ro
+
+volumes:
+  semaphore-data:

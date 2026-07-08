@@ -1,0 +1,2 @@
+---
+loki_url: "http://10.1.0.57:3100/loki/api/v1/push"

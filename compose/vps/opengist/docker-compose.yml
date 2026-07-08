@@ -1,0 +1,19 @@
+services:
+  opengist:
+    image: ghcr.io/thomiceli/opengist:1.13.1
+    container_name: opengist
+    restart: unless-stopped
+    mem_limit: 128m
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:6157:6157"
+    volumes:
+      - ./data:/opt/opengist
+    env_file: .env
+    environment:
+      - OG_EXTERNAL_URL=https://gist.hartforge.dev
+      - OG_SSH_GIT_ENABLED=false
+      - OG_DISABLE_SIGNUP=true
+      - OG_OIDC_PROVIDER_NAME=Pocket ID
+      - OG_OIDC_DISCOVERY_URL=https://pocket-id.hartforge.dev/.well-known/openid-configuration

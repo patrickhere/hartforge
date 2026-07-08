@@ -1,0 +1,14 @@
+---
+skip_list:
+  - yaml[truthy]
+  - yaml[line-length]
+  - name[missing]
+
+warn_list:
+  - command-instead-of-shell
+  - no-changed-when
+
+exclude_paths:
+  - backups/
+  - .git/
+  - callback_plugins/

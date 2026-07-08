@@ -1,0 +1,461 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Container Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\"jellyfin|sonarr|radarr|lidarr|bazarr|prowlarr|sabnzbd|seerr|jellystat|dozzle\"}[5m])",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\"jellyfin|sonarr|radarr|lidarr|bazarr|prowlarr|sabnzbd|seerr|jellystat|dozzle\"}",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "rate(container_network_receive_bytes_total{name=~\"jellyfin|sonarr|radarr|lidarr|bazarr|prowlarr|sabnzbd|seerr\"}[5m])",
+          "legendFormat": "{{name}} rx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_network_transmit_bytes_total{name=~\"jellyfin|sonarr|radarr|lidarr|bazarr|prowlarr|sabnzbd|seerr\"}[5m])",
+          "legendFormat": "{{name}} tx",
+          "refId": "B"
+        }
+      ],
+      "title": "Network I/O",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 101,
+      "title": "Disk Usage",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percentunit",
+          "max": 1,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 10 },
+      "id": 4,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "expr": "1 - (node_filesystem_avail_bytes{instance=\"yams\",mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"yams\",mountpoint=\"/\"})",
+          "legendFormat": "Root (/)",
+          "refId": "A"
+        }
+      ],
+      "title": "YAMS Root Disk",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 16, "x": 8, "y": 10 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "table", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "node_filesystem_size_bytes{instance=\"yams\",fstype!~\"tmpfs|overlay\"} - node_filesystem_avail_bytes{instance=\"yams\",fstype!~\"tmpfs|overlay\"}",
+          "legendFormat": "Used {{mountpoint}}",
+          "refId": "A"
+        },
+        {
+          "expr": "node_filesystem_avail_bytes{instance=\"yams\",fstype!~\"tmpfs|overlay\"}",
+          "legendFormat": "Free {{mountpoint}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Disk Usage Trend (30d)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 102,
+      "title": "Arr Stack",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 17 },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "sonarr_episode_missing_total",
+          "legendFormat": "Missing Episodes",
+          "refId": "A"
+        }
+      ],
+      "title": "Sonarr Missing",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 17 },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "radarr_movie_missing_total",
+          "legendFormat": "Missing Movies",
+          "refId": "A"
+        }
+      ],
+      "title": "Radarr Missing",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 17 },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "sonarr_series_total",
+          "legendFormat": "Series",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Series",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 17 },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "radarr_movie_total",
+          "legendFormat": "Movies",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Movies",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 17 },
+      "id": 10,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "sonarr_series_filesize_bytes + radarr_movie_filesize_total",
+          "legendFormat": "Total",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Media Size",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 17 },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "sonarr_rootfolder_freespace_bytes",
+          "legendFormat": "Free Space",
+          "refId": "A"
+        }
+      ],
+      "title": "Media Free Space",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "lineWidth": 1,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 21 },
+      "id": 12,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "sonarr_episode_downloaded_total",
+          "legendFormat": "Downloaded Episodes",
+          "refId": "A"
+        },
+        {
+          "expr": "sonarr_episode_total",
+          "legendFormat": "Total Episodes",
+          "refId": "B"
+        }
+      ],
+      "title": "Sonarr Episodes Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "effncqbguicxse" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "lineWidth": 1,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 21 },
+      "id": 13,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "radarr_movie_downloaded_total",
+          "legendFormat": "Downloaded Movies",
+          "refId": "A"
+        },
+        {
+          "expr": "radarr_movie_total",
+          "legendFormat": "Total Movies",
+          "refId": "B"
+        }
+      ],
+      "title": "Radarr Movies Over Time",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["media", "yams"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Media Stack",
+  "uid": "media-stack",
+  "version": 1
+}

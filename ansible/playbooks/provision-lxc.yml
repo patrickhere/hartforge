@@ -1,0 +1,80 @@
+---
+# Create and bootstrap LXCs on Proxmox from definitions.
+# Usage: ansible-playbook playbooks/provision-lxc.yml
+#   -e target=caddy              Provision a single LXC by hostname
+#   -e target=all                Provision all defined LXCs
+#
+# Requires: Proxmox API token in vars/secrets.yml (vault-encrypted)
+# Definitions: inventory/host_vars/prox-svr1.yml -> lxc_definitions
+
+- name: Provision LXCs on Proxmox
+  hosts: prox-svr1
+  gather_facts: false
+  vars:
+    target: ""
+  vars_files:
+    - ../vars/secrets.yml
+
+  tasks:
+    - name: Validate target
+      ansible.builtin.assert:
+        that: target | length > 0
+        fail_msg: "Provide -e target=<hostname> or -e target=all"
+
+    - name: Filter LXC definitions
+      ansible.builtin.set_fact:
+        lxcs_to_create: >-
+          {{ lxc_definitions if target == 'all'
+             else lxc_definitions | selectattr('hostname', 'equalto', target) | list }}
+
+    - name: Create LXC containers
+      community.proxmox.proxmox:
+        api_host: "{{ ansible_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        vmid: "{{ item.vmid }}"
+        hostname: "{{ item.hostname }}"
+        ostemplate: "{{ item.template }}"
+        cores: "{{ item.cores }}"
+        memory: "{{ item.memory }}"
+        disk: "{{ item.disk }}"
+        netif: '{"net0":"name=eth0,bridge=vmbr0,ip={{ item.ip }},gw={{ item.gw }}"}'
+        onboot: "{{ item.onboot | default(true) }}"
+        unprivileged: "{{ item.unprivileged | default(true) }}"
+        tags: "{{ item.tags | default(omit) }}"
+        pubkey: "{{ ssh_authorized_keys | first }}"
+        nameserver: "10.1.0.10"
+        searchdomain: "hartforge.dev"
+        state: present
+      loop: "{{ lxcs_to_create }}"
+      loop_control:
+        label: "{{ item.hostname }} ({{ item.vmid }})"
+      register: created_lxcs
+
+    - name: Start new LXC containers
+      community.proxmox.proxmox:
+        api_host: "{{ ansible_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        vmid: "{{ item.vmid }}"
+        state: started
+      loop: "{{ lxcs_to_create }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+
+    - name: Wait for SSH on new containers
+      ansible.builtin.wait_for:
+        host: "{{ item.ip | regex_replace('/.*', '') }}"
+        port: 22
+        timeout: 60
+      loop: "{{ lxcs_to_create }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+
+    - name: Print provisioning summary
+      ansible.builtin.debug:
+        msg: >-
+          Provisioned {{ lxcs_to_create | length }} LXC(s).
+          Run bootstrap: ansible-playbook playbooks/bootstrap-lxc.yml --limit {{ lxcs_to_create | map(attribute='hostname') | join(',') }}

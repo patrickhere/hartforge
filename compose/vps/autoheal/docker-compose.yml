@@ -1,0 +1,15 @@
+services:
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    container_name: autoheal
+    restart: unless-stopped
+    mem_limit: 64m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      # restarts were silent before - post to ntfy (creds in ./.env, gitignored)
+      - WEBHOOK_URL=https://${NTFY_CREDS}@ntfy.hartforge.dev/homelab-alerts
+      - WEBHOOK_JSON_KEY=message
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

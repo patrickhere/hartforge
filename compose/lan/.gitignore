@@ -1,0 +1,6 @@
+# Backup artifacts
+/backups/
+
+# Secret/environment files
+.env
+caddy/environment

@@ -1,0 +1,11 @@
+---
+svc_name: Grafana
+svc_check: "docker ps --filter name=grafana --filter status=running -q | grep -q ."
+svc_port: 3000
+compose_path: /opt/monitoring
+
+backup_files:
+  - { src: "/opt/monitoring/docker-compose.yaml", dest: "monitoring/docker-compose.yaml" }
+  - { src: "/opt/monitoring/prometheus.yml", dest: "monitoring/prometheus.yml" }
+  - { src: "/opt/monitoring/loki-config.yml", dest: "monitoring/loki-config.yml" }
+  - { src: "/opt/monitoring/alloy-config.alloy", dest: "monitoring/alloy-config.alloy" }

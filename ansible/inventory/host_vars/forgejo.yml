@@ -1,0 +1,8 @@
+---
+svc_name: Forgejo
+svc_check: "docker ps --filter name=forgejo --filter status=running -q | grep -q ."
+svc_port: 3000
+compose_path: /opt/forgejo
+
+backup_files:
+  - { src: "/opt/forgejo/docker-compose.yaml", dest: "forgejo/docker-compose.yaml" }

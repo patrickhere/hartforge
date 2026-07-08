@@ -1,0 +1,18 @@
+services:
+  power-tools:
+    image: ghcr.io/immich-power-tools/immich-power-tools:v0.20.1
+    container_name: immich-power-tools
+    restart: unless-stopped
+    ports:
+      - "10.1.0.59:3006:3000"
+    env_file:
+      - .env
+    environment:
+      - IMMICH_URL=http://immich-server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+    networks:
+      - immich_default
+
+networks:
+  immich_default:
+    external: true

@@ -1,0 +1,7 @@
+- name: Hart Forge Status
+  hosts: linux
+  gather_facts: true
+  tasks:
+    - name: "{{ inventory_hostname }}"
+      debug:
+        msg: "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} | {{ ansible_facts['processor_vcpus'] }} vCPU | {{ (ansible_facts['memtotal_mb'] / 1024) | round(1) }}GB RAM | Uptime: {{ ansible_facts['uptime_seconds'] | int // 86400 }}d {{ (ansible_facts['uptime_seconds'] | int % 86400) // 3600 }}h"

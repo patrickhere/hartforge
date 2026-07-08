@@ -1,0 +1,30 @@
+/* Soften card edges and add subtle depth */
+.service-card {
+  border-radius: 12px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.service-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Clean up group headers */
+.services-group h2 {
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  opacity: 0.7 !important;
+}
+
+/* Subtle separator between groups */
+.services-group {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Widget text cleanup */
+.widget-label {
+  font-size: 0.65rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+}

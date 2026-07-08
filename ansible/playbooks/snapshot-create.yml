@@ -1,0 +1,46 @@
+---
+# Create Proxmox snapshots before maintenance.
+# Usage: ansible-playbook playbooks/snapshot-create.yml
+#   -e target=caddy          Snapshot a single LXC
+#   -e target=all            Snapshot all LXCs
+#   -e snap_prefix=pre-update  Snapshot name prefix (default: pre-update)
+#   -e retention=3           Keep N most recent snapshots (default: 3)
+#
+# Requires: Proxmox API credentials in vars/secrets.yml (vault-encrypted)
+
+- name: Create Proxmox snapshots
+  hosts: prox-svr1
+  gather_facts: false
+  vars:
+    target: "all"
+    snap_prefix: "pre-update"
+    retention: 3
+    snap_name: "{{ snap_prefix }}-{{ lookup('pipe', 'date +%Y%m%d') }}"
+  vars_files:
+    - ../vars/secrets.yml
+
+  tasks:
+    - name: Filter LXC definitions
+      ansible.builtin.set_fact:
+        lxcs_to_snap: >-
+          {{ lxc_definitions if target == 'all'
+             else lxc_definitions | selectattr('hostname', 'equalto', target) | list }}
+
+    - name: Create snapshot for each LXC
+      community.proxmox.proxmox_snap:
+        api_host: "{{ ansible_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        vmid: "{{ item.vmid }}"
+        snapname: "{{ snap_name }}"
+        description: "Automated snapshot before maintenance"
+        state: present
+        retention: "{{ retention }}"
+      loop: "{{ lxcs_to_snap }}"
+      loop_control:
+        label: "{{ item.hostname }} ({{ item.vmid }})"
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "Created snapshot '{{ snap_name }}' for {{ lxcs_to_snap | map(attribute='hostname') | join(', ') }}"

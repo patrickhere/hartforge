@@ -1,0 +1,23 @@
+services:
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:v2.1.1-ls222
+    container_name: syncthing
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=America/Chicago
+    volumes:
+      - ./config:/config
+      - /opt/calibre-web/library:/library
+    ports:
+      - "127.0.0.1:8384:8384"
+    restart: unless-stopped
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8384/rest/noauth/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

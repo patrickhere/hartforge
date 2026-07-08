@@ -1,0 +1,11 @@
+---
+svc_name: YAMS
+svc_check: "docker ps --filter name=jellyfin --filter status=running -q | grep -q ."
+svc_port: 8096
+compose_path: /opt/yams
+
+backup_files:
+  - { src: "/opt/yams/docker-compose.custom.yaml", dest: "yams/docker-compose.custom.yaml" }
+  - { src: "/opt/yams/.env", dest: "yams/.env" }
+  - { src: "/opt/yams/config/recyclarr/recyclarr.yml", dest: "yams/recyclarr.yml" }
+  - { src: "/opt/yams/config/alloy/config.alloy", dest: "yams/alloy-config.alloy" }

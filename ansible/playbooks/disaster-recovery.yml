@@ -1,0 +1,55 @@
+---
+# Disaster recovery - rebuild the entire homelab from scratch.
+# Usage: ansible-playbook playbooks/disaster-recovery.yml
+#
+# This is an orchestration playbook that chains:
+#   1. Provision all LXCs on Proxmox
+#   2. Bootstrap each with roles (common, docker, alloy, etc.)
+#   3. Deploy compose stacks
+#   4. Restore configs from backup
+#   5. Verify health
+#
+# Prerequisites:
+#   - Fresh Proxmox install at 10.1.0.50
+#   - Network configured (10.1.0.0/24)
+#   - Proxmox API token in vault
+#   - Backup files available in backups/ directory
+
+- name: "Phase 1: Provision all LXCs"
+  ansible.builtin.import_playbook: provision-lxc.yml
+  vars:
+    target: all
+
+- name: "Phase 2: Bootstrap all LXCs"
+  hosts: linux:!proxmox:!vps
+  become: true
+  gather_facts: true
+  roles:
+    - common
+    - node_exporter
+    - motd
+
+- name: "Phase 3: Bootstrap Docker hosts"
+  hosts: docker
+  become: true
+  gather_facts: true
+  roles:
+    - docker
+
+- name: "Phase 4: Deploy compose stacks"
+  ansible.builtin.import_playbook: deploy-compose.yml
+
+- name: "Phase 5: Verify all services"
+  ansible.builtin.import_playbook: health-check.yml
+
+- name: "Phase 6: Report"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: DR rebuild complete
+      ansible.builtin.debug:
+        msg: >-
+          Disaster recovery rebuild complete.
+          Run backup-configs.yml to restore service-specific configs,
+          then verify each service manually.

@@ -1,0 +1,18 @@
+- Developer:
+    - GitHub:
+        - icon: github
+          href: https://github.com/patrickhere
+    - Forgejo:
+        - icon: gitea
+          href: https://git.hartforge.dev
+
+- External:
+    - Cloudflare:
+        - icon: cloudflare
+          href: https://dash.cloudflare.com
+    - Tailscale:
+        - icon: tailscale
+          href: https://login.tailscale.com/admin/machines
+    - Ionos:
+        - icon: mdi-server
+          href: https://my.ionos.com

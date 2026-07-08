@@ -1,0 +1,18 @@
+local.file_match "logs" {
+  path_targets = [{
+    __path__  = "/var/log/**/*.log",
+    job       = "{{ inventory_hostname }}",
+    instance  = "{{ ansible_host }}",
+  }]
+}
+
+loki.source.file "logs" {
+  targets    = local.file_match.logs.targets
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "{{ loki_url }}"
+  }
+}

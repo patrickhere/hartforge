@@ -1,0 +1,5 @@
+/backups/
+/vars/secrets.yml
+.vault-pass
+data/*.yaml
+backups/*/homepage/config/services.yaml

@@ -1,0 +1,36 @@
+---
+# Bootstrap a freshly created LXC with standard base config.
+# Usage: ansible-playbook playbooks/bootstrap-lxc.yml --limit <hostname>
+# Optional vars:
+#   -e install_docker=true    Install Docker CE + compose plugin
+#   -e install_alloy=true     Install Alloy log shipper (ships to Loki)
+#
+# Tags: common, ssh, packages, docker, alloy, motd, monitoring, node_exporter
+#
+# Prerequisites: LXC created in Proxmox with SSH key deployed and started.
+
+- name: Bootstrap LXC
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    install_docker: false
+    install_alloy: false
+
+  roles:
+    - common
+    - node_exporter
+    - motd
+    - role: docker
+      when: install_docker | bool
+    - role: alloy
+      when: install_alloy | bool
+
+  tasks:
+    - name: Print bootstrap summary
+      debug:
+        msg: >-
+          Bootstrap complete: {{ inventory_hostname }} ({{ ansible_host }}).
+          Docker={{ install_docker }}, Alloy={{ install_alloy }}.
+          Node-exporter on :9100.
+      tags: always

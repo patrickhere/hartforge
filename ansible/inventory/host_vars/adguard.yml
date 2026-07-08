@@ -1,0 +1,4 @@
+---
+svc_name: AdGuard Home
+svc_check: "systemctl is-active AdGuardHome"
+svc_port: 80

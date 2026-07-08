@@ -1,0 +1,4 @@
+---
+svc_name: Termix
+svc_check: "docker ps --filter name=termix --filter status=running -q | grep -q ."
+svc_port: 8080

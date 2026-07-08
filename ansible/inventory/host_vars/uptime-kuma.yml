@@ -1,0 +1,8 @@
+---
+svc_name: Uptime Kuma
+svc_check: "docker ps --filter name=uptime-kuma --filter status=running -q | grep -q ."
+svc_port: 3001
+compose_path: /opt/uptime-kuma
+
+backup_files:
+  - { src: "/opt/uptime-kuma/docker-compose.yaml", dest: "uptime-kuma/docker-compose.yaml" }

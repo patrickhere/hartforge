@@ -1,0 +1,9 @@
+---
+svc_name: Immich
+svc_check: "docker ps --filter name=immich-server --filter status=running -q | grep -q ."
+svc_port: 2283
+compose_path: /opt/immich
+
+backup_files:
+  - { src: "/opt/immich/.env", dest: "immich/.env" }
+  - { src: "/opt/immich/docker-compose.yml", dest: "immich/docker-compose.yml" }

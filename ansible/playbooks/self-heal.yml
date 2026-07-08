@@ -1,0 +1,74 @@
+---
+# Auto-remediate common issues on Docker hosts.
+# Usage: ansible-playbook playbooks/self-heal.yml
+#
+# What it does:
+#   - Restarts crashed/exited containers
+#   - Prunes Docker if disk > 85%
+#   - Reports actions taken via debug output
+#
+# Safe to run via cron. Does NOT delete data or restart healthy services.
+# Tags: heal, containers, disk
+
+- name: Self-healing checks
+  hosts: docker
+  become: false
+  gather_facts: false
+  tags: [heal]
+
+  tasks:
+    - name: Find exited containers
+      ansible.builtin.shell: docker ps -a --filter "status=exited" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: exited
+      changed_when: false
+      tags: [containers]
+
+    - name: Restart exited containers
+      ansible.builtin.shell: "docker start {{ item }}"
+      loop: "{{ exited.stdout_lines }}"
+      when: exited.stdout | length > 0
+      register: restarted
+      tags: [containers]
+
+    - name: Report container restarts
+      ansible.builtin.debug:
+        msg: "Restarted {{ exited.stdout_lines | length }} container(s) on {{ inventory_hostname }}: {{ exited.stdout_lines | join(', ') }}"
+      when: exited.stdout | length > 0
+      tags: [containers]
+
+    - name: Check disk usage percentage
+      ansible.builtin.shell: df / --output=pcent | tail -1 | tr -d ' %'
+      register: disk_pct
+      changed_when: false
+      tags: [disk]
+
+    - name: Prune Docker if disk above 85%
+      community.docker.docker_prune:
+        images: true
+        images_filters:
+          dangling: true
+        containers: true
+        builder_cache: true
+      when: disk_pct.stdout | int > 85
+      register: prune_result
+      tags: [disk]
+
+    - name: Report disk cleanup
+      ansible.builtin.debug:
+        msg: "Disk at {{ disk_pct.stdout }}% on {{ inventory_hostname }} - pruned Docker resources"
+      when: disk_pct.stdout | int > 85
+      tags: [disk]
+
+    - name: Verify primary service
+      ansible.builtin.shell: "{{ svc_check }}"
+      when: svc_check is defined
+      changed_when: false
+      failed_when: false
+      register: svc_result
+      tags: [heal]
+
+    - name: Report service status
+      ansible.builtin.debug:
+        msg: "{{ svc_name | default(inventory_hostname) }}: {{ 'OK' if svc_result.rc | default(0) == 0 else 'NEEDS ATTENTION' }}"
+      when: svc_check is defined
+      tags: [heal]

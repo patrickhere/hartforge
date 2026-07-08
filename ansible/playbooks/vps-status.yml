@@ -1,0 +1,61 @@
+---
+- name: VPS status check
+  hosts: vps
+  become: true
+  tasks:
+    - name: Get Docker container status
+      command: docker ps -a --format "table {% raw %}{{.Names}}\t{{.Status}}\t{{.Ports}}{% endraw %}"
+      register: docker_ps
+      changed_when: false
+
+    - name: Show Docker containers
+      debug:
+        msg: "{{ docker_ps.stdout_lines }}"
+
+    - name: Check Caddy service status
+      command: systemctl status caddy --no-pager
+      register: caddy_status
+      changed_when: false
+      failed_when: false
+
+    - name: Show Caddy status
+      debug:
+        msg: "{{ caddy_status.stdout_lines }}"
+
+    - name: Check disk usage
+      command: df -h --output=source,size,used,avail,pcent,target -x tmpfs -x devtmpfs
+      register: disk_usage
+      changed_when: false
+
+    - name: Show disk usage
+      debug:
+        msg: "{{ disk_usage.stdout_lines }}"
+
+    - name: Check memory and swap usage
+      command: free -h
+      register: mem_usage
+      changed_when: false
+
+    - name: Show memory usage
+      debug:
+        msg: "{{ mem_usage.stdout_lines }}"
+
+    - name: Check iptables DOCKER-USER chain
+      command: iptables -L DOCKER-USER -n -v
+      register: iptables_rules
+      changed_when: false
+      failed_when: false
+
+    - name: Show iptables DOCKER-USER rules
+      debug:
+        msg: "{{ iptables_rules.stdout_lines }}"
+
+    - name: Check Tailscale status
+      command: tailscale status
+      register: tailscale_status
+      changed_when: false
+      failed_when: false
+
+    - name: Show Tailscale status
+      debug:
+        msg: "{{ tailscale_status.stdout_lines }}"

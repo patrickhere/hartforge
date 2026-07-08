@@ -1,0 +1,489 @@
+# crucible -- hartforge media stack
+# replaces YAMS. managed via homelab-compose repo.
+# deploy: docker compose up -d
+# update: docker compose pull <service> && docker compose up -d <service>
+
+name: crucible
+
+services:
+
+  # ── Media Server ──────────────────────────────────────────────
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:10.11.6ubu2404-ls23
+    container_name: jellyfin
+    runtime: nvidia
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - VERSION=docker
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/jellyfin:/config
+    ports:
+      - 8096:8096
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Arr Stack ─────────────────────────────────────────────────
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:4.0.16.2944-ls304
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/sonarr:/config
+    ports:
+      - 8989:8989
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:6.0.4.10291-ls295
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/radarr:/config
+    ports:
+      - 7878:7878
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:3.1.0.4875-ls22
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/lidarr:/config
+    ports:
+      - 8686:8686
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:v1.5.6-ls341
+    container_name: bazarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/bazarr:/config
+    ports:
+      - 6767:6767
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:2.3.0.5236-ls139
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${INSTALL_DIRECTORY}/config/prowlarr:/config
+    ports:
+      - 9696:9696
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Download Clients ──────────────────────────────────────────
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.1.4-r2-ls445
+    container_name: qbittorrent
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - WEBUI_PORT=8081
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/qbittorrent:/config
+    ports:
+      - 8081:8081
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:4.5.5-ls245
+    container_name: sabnzbd
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/sabnzbd:/config
+    ports:
+      - 8080:8080
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  unpackerr:
+    image: ghcr.io/unpackerr/unpackerr:latest
+    container_name: unpackerr
+    environment:
+      - TZ=${TZ}
+      - UN_SONARR_0_URL=http://sonarr:8989
+      - UN_SONARR_0_API_KEY=${SONARR_API_KEY}
+      - UN_RADARR_0_URL=http://radarr:7878
+      - UN_RADARR_0_API_KEY=${RADARR_API_KEY}
+      - UN_LIDARR_0_URL=http://lidarr:8686
+      - UN_LIDARR_0_API_KEY=${LIDARR_API_KEY}
+      - UN_SABNZBD_0_URL=http://sabnzbd:8080
+      - UN_SABNZBD_0_API_KEY=${SABNZBD_API_KEY}
+    volumes:
+      - ${MEDIA_DIRECTORY}:/data
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Media Utilities ───────────────────────────────────────────
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    init: true
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/seerr:/app/config
+    ports:
+      - 5055:5055
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/recyclarr:/config
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/profilarr:/config
+    ports:
+      - 6868:6868
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  jellystat-db:
+    image: postgres:16-alpine
+    container_name: jellystat-db
+    environment:
+      - POSTGRES_DB=jfstat
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${JELLYSTAT_POSTGRES_PASSWORD}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/jellystat-db:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jfstat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  jellystat:
+    image: cyfershepard/jellystat:latest
+    container_name: jellystat
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${JELLYSTAT_POSTGRES_PASSWORD}
+      - POSTGRES_IP=jellystat-db
+      - POSTGRES_PORT=5432
+      - JWT_SECRET=${JELLYSTAT_JWT_SECRET}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/jellystat:/app/backend/backup-data
+    ports:
+      - 3000:3000
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      jellystat-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Live TV ───────────────────────────────────────────────
+
+  tunarr:
+    image: chrisbenincasa/tunarr:latest
+    container_name: tunarr
+    runtime: nvidia
+    environment:
+      - TZ=${TZ}
+      - TUNARR_SERVER_TRUST_PROXY=true
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${INSTALL_DIRECTORY}/config/tunarr:/config/tunarr
+      - ${MEDIA_DIRECTORY}:/data:ro
+    ports:
+      - 8000:8000
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Poster Management ────────────────────────────────────────
+
+  posterizarr:
+    image: ghcr.io/fscorrupt/posterizarr:latest
+    container_name: posterizarr
+    environment:
+      - TZ=${TZ}
+      - TERM=xterm
+      - RUN_TIME=disabled
+    user: "${PUID}:${PGID}"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${INSTALL_DIRECTORY}/config/posterizarr:/config
+      - ${INSTALL_DIRECTORY}/config/posterizarr/assets:/assets
+      - ${INSTALL_DIRECTORY}/config/posterizarr/assetsbackup:/assetsbackup
+      - ${INSTALL_DIRECTORY}/config/posterizarr/manualassets:/manualassets
+    ports:
+      - 8400:8000
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Observability ─────────────────────────────────────────────
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    environment:
+      - TZ=${TZ}
+      - DOZZLE_AUTH_PROVIDER=forward-proxy
+      - DOZZLE_AUTH_HEADER_USER=X-Authentik-Username
+      - DOZZLE_AUTH_HEADER_EMAIL=X-Authentik-Email
+      - DOZZLE_AUTH_HEADER_NAME=X-Authentik-Name
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 9999:8080
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    network_mode: host
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run /etc/alloy/config.alloy
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    ports:
+      - 8088:8080
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  exportarr-sonarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-sonarr
+    command: sonarr
+    environment:
+      - PORT=9707
+      - URL=http://sonarr:8989
+      - API_KEY=${SONARR_API_KEY}
+    ports:
+      - 9707:9707
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  exportarr-radarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-radarr
+    command: radarr
+    environment:
+      - PORT=9708
+      - URL=http://radarr:7878
+      - API_KEY=${RADARR_API_KEY}
+    ports:
+      - 9708:9708
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  exportarr-prowlarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-prowlarr
+    command: prowlarr
+    environment:
+      - PORT=9709
+      - URL=http://prowlarr:9696
+      - API_KEY=${PROWLARR_API_KEY}
+    ports:
+      - 9709:9709
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  exportarr-lidarr:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-lidarr
+    command: lidarr
+    environment:
+      - PORT=9710
+      - URL=http://lidarr:8686
+      - API_KEY=${LIDARR_API_KEY}
+    ports:
+      - 9710:9710
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  exportarr-sabnzbd:
+    image: ghcr.io/onedr0p/exportarr:latest
+    container_name: exportarr-sabnzbd
+    command: sabnzbd
+    environment:
+      - PORT=9711
+      - URL=http://sabnzbd:8080
+      - API_KEY=${SABNZBD_API_KEY}
+    ports:
+      - 9711:9711
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    restart: unless-stopped
+
+  # ── Transcode Automation ─────────────────────────────────────
+
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:2.66.01
+    container_name: tdarr
+    runtime: nvidia
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK_SET=002
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeName=CrucibleNode
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${INSTALL_DIRECTORY}/config/tdarr/server:/app/server
+      - ${INSTALL_DIRECTORY}/config/tdarr/configs:/app/configs
+      - ${INSTALL_DIRECTORY}/config/tdarr/logs:/app/logs
+      - ${MEDIA_DIRECTORY}:/data
+      - ${INSTALL_DIRECTORY}/config/tdarr/transcode_cache:/temp
+    ports:
+      - 8265:8265
+      - 8266:8266
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${INSTALL_DIRECTORY}/config/diun:/data
+      - ${INSTALL_DIRECTORY}/config/diun/diun.yml:/diun.yml:ro
+      - ${INSTALL_DIRECTORY}/secrets/ntfy-token:/run/secrets/ntfy-token:ro
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

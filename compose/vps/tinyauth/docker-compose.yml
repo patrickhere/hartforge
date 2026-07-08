@@ -1,0 +1,17 @@
+services:
+  tinyauth:
+    image: ghcr.io/steveiliop56/tinyauth:v5
+    container_name: tinyauth
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 128m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    ports:
+      - "127.0.0.1:3080:3000"
+      - "100.70.8.13:3080:3000"
+    volumes:
+      - ./data:/data

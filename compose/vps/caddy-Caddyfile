@@ -1,0 +1,171 @@
+{
+	order crowdsec first
+
+	log default {
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 5
+		}
+		format json
+	}
+
+	servers {
+		# generated weekly by /usr/local/bin/update-cf-ranges.sh - do not edit by hand
+		import /etc/caddy/cf_trusted_proxies.caddy
+	}
+
+	crowdsec {
+		api_url http://localhost:8080
+		api_key {env.CROWDSEC_API_KEY}
+		ticker_interval 15s
+		appsec_url http://127.0.0.1:7422
+	}
+}
+
+(secure_headers) {
+	header {
+		-Server
+		-X-Powered-By
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+	}
+}
+
+# baseline for every vhost - exceptions must be explicit and commented
+(protected) {
+	log
+	crowdsec
+	import secure_headers
+	@securitytxt path /.well-known/security.txt
+	respond @securitytxt <<TXT
+		Contact: mailto:loose.watch3247@fastmail.com
+		Expires: 2027-07-08T00:00:00.000Z
+		Preferred-Languages: en
+		TXT 200
+	encode zstd gzip
+}
+
+(tinyauth) {
+	forward_auth 127.0.0.1:3080 {
+		uri /api/auth/caddy
+		copy_headers Remote-User Remote-Name Remote-Email Remote-Groups
+	}
+}
+
+ntfy.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:2586
+}
+
+auth.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:3080
+}
+
+pocket-id.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:1411
+}
+
+uptime-ext.hartforge.dev {
+	import protected
+	import tinyauth
+	reverse_proxy 127.0.0.1:3001
+}
+
+git.hartforge.dev {
+	import protected
+	request_body {
+		max_size 512MB
+	}
+	reverse_proxy 127.0.0.1:3002 {
+		header_up X-Real-IP {client_ip}
+	}
+}
+
+jellyfin.hartforge.dev {
+	import protected
+	reverse_proxy http://100.72.198.59:8096 {
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-Host {host}
+		transport http {
+			read_buffer 8192
+		}
+		flush_interval -1
+	}
+}
+
+wizarr.hartforge.dev {
+	import protected
+	reverse_proxy http://100.72.198.59:5690 {
+		flush_interval -1
+	}
+}
+
+tracearr.hartforge.dev {
+	import protected
+	import tinyauth
+	reverse_proxy http://100.72.198.59:3001
+}
+
+seerr.hartforge.dev {
+	import protected
+	reverse_proxy http://100.72.198.59:5055 {
+		flush_interval -1
+	}
+}
+
+hartforge.dev {
+	import protected
+	root * /opt/landing
+	file_server
+}
+
+gist.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:6157
+}
+
+term.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:8787
+}
+
+# chat.hartforge.dev - DISABLED, re-enable when IP restriction is sorted
+# NOTE: the old @blocked gate matched the raw Cf-Connecting-Ip header, which is
+# client-spoofable when the origin is hit directly. If re-enabled, use
+# @blocked not client_ip 198.51.100.7 (resolved via trusted_proxies) instead.
+# chat.hartforge.dev {
+#	log {
+#		output file /var/log/caddy/chat-access.log {
+#			roll_size 10mb
+#			roll_keep 3
+#		}
+#		format json
+#	}
+#	@blocked not client_ip 198.51.100.7
+#	respond @blocked 403
+#	crowdsec
+#	import tinyauth
+#	import secure_headers
+#	reverse_proxy 100.112.186.36:7001
+# }
+
+books.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:8083
+}
+
+shelfmark.hartforge.dev {
+	import protected
+	reverse_proxy 127.0.0.1:8084
+}
+
+syncthing.hartforge.dev {
+	import protected
+	import tinyauth
+	reverse_proxy 127.0.0.1:8384
+}
