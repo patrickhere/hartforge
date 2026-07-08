@@ -36,6 +36,9 @@ motd/          catppuccin MOTD system with a pokemon buddy per host
 - `motd/` - every host greets you with its own pokemon, named per machine
 - monitoring is push-based where it matters: uptime kuma heartbeats wired into
   the cron jobs themselves, so a dead script pages instead of silently stopping
+- agentic coding is part of the toolchain: a persistent claude-based agent with
+  SSH access to the fleet handles ops, audits, and deployments alongside me -
+  much of what's in this repo was built and is maintained that way
 
 ## notes
 
