@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "public-by-design values"
+regexes = [
+  # cloudflare web analytics beacon tokens are served to every visitor in page html
+  '''data-cf-beacon''',
+]
