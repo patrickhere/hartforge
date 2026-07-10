@@ -249,6 +249,18 @@ www.hartforge.com {
 	redir https://hartforge.com{uri} permanent
 }
 
+# staging for hartforge.com redesign review - not for indexing
+canary.hartforge.com {
+	import protected
+	root * /opt/resume-canary
+	file_server
+	header X-Robots-Tag "noindex, nofollow"
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+}
+
 harthauling.com, www.harthauling.com {
 	redir https://iharthomes.com{uri} permanent
 }
