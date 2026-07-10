@@ -7,6 +7,14 @@ services:
       - no-new-privileges:true
     ports:
       - "127.0.0.1:3001:3001"
+    # public resolvers: host DNS goes through systemd-resolved which reads the
+    # host /etc/hosts alias (git -> 127.0.0.1, the internal caddy listener) -
+    # inside the container that loopback is the container itself and 443 from
+    # docker subnets is ufw-blocked anyway. monitors should take the CF path
+    # like real users do.
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     volumes:
       - data:/app/data
 

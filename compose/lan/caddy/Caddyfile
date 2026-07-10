@@ -27,12 +27,10 @@
 	}
 }
 
-(authentik) {
-	forward_auth http://100.70.8.13:9000 {
-		uri /outpost.goauthentik.io/auth/caddy
-		copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid
-		header_up X-Forwarded-Host {host}
-		trusted_proxies private_ranges
+(tinyauth) {
+	forward_auth http://100.70.8.13:3080 {
+		uri /api/auth/caddy
+		copy_headers Remote-User Remote-Name Remote-Email Remote-Groups
 	}
 }
 
@@ -60,7 +58,7 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:5055
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:5055
 		}
 	}
@@ -72,7 +70,7 @@
 
 	@ersatztv host tv.hartforge.dev
 	handle @ersatztv {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:8000
 	}
 
@@ -84,7 +82,7 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:8989
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:8989
 		}
 	}
@@ -95,7 +93,7 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:7878
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:7878
 		}
 	}
@@ -106,7 +104,7 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:8686
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:8686
 		}
 	}
@@ -117,7 +115,7 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:6767
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:6767
 		}
 	}
@@ -128,32 +126,32 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.52:9696
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.52:9696
 		}
 	}
 
 	@sabnzbd host sabnzbd.hartforge.dev
 	handle @sabnzbd {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:8080
 	}
 
 	@qbit host qbit.hartforge.dev
 	handle @qbit {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:8081
 	}
 
 	@profilarr host profilarr.hartforge.dev
 	handle @profilarr {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:6868
 	}
 
 	@posterizarr host poster.hartforge.dev
 	handle @posterizarr {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:8400
 	}
 
@@ -172,7 +170,7 @@
 
 	@uptime host uptime.hartforge.dev
 	handle @uptime {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.53:3001
 	}
 
@@ -182,20 +180,20 @@
 			@api path /api/*
 			reverse_proxy @api http://10.1.0.57:3000
 
-			import authentik
+			import tinyauth
 			reverse_proxy http://10.1.0.57:3000
 		}
 	}
 
 	@prometheus host prometheus.hartforge.dev
 	handle @prometheus {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.57:9090
 	}
 
 	@logs host logs.hartforge.dev
 	handle @logs {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:9999
 	}
 
@@ -203,7 +201,7 @@
 
 	@home host home.hartforge.dev
 	handle @home {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.54:3000
 	}
 
@@ -224,7 +222,7 @@
 
 	@paimon host paimon.hartforge.dev
 	handle @paimon {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.81:4822 {
 			flush_interval -1
 		}
@@ -245,7 +243,7 @@
 
 	@tdarr host tdarr.hartforge.dev
 	handle @tdarr {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:8265
 	}
 
@@ -256,7 +254,7 @@
 
 	@tracearr host tracearr.hartforge.dev
 	handle @tracearr {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.52:3001
 	}
 
@@ -267,13 +265,13 @@
 
 	@phototools host photo-tools.hartforge.dev
 	handle @phototools {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.59:3006
 	}
 
 	@semaphore host semaphore.hartforge.dev
 	handle @semaphore {
-		import authentik
+		import tinyauth
 		reverse_proxy http://10.1.0.81:3100
 	}
 

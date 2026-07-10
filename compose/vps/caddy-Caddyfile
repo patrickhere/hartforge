@@ -34,8 +34,22 @@
 	}
 }
 
+# cloudflare authenticated origin pulls - CF edge must present its client cert
+# during the TLS handshake, so only traffic routed through our CF zones gets in.
+# requires AOP enabled on each zone (SSL/TLS -> Origin Server) BEFORE importing,
+# otherwise every proxied site breaks at the handshake.
+(cf_mtls) {
+	tls {
+		client_auth {
+			mode require_and_verify
+			trust_pool file /etc/caddy/cf-origin-pull-ca.pem
+		}
+	}
+}
+
 # baseline for every vhost - exceptions must be explicit and commented
 (protected) {
+	import cf_mtls
 	log
 	crowdsec
 	import secure_headers
@@ -86,6 +100,22 @@ git.hartforge.dev {
 	}
 }
 
+# internal-only git listener (tailscale + loopback) - bypasses cloudflare so
+# large pushes dodge the 100MB body cap and mtls doesnt apply. /etc/hosts on
+# the mac mini points git.hartforge.dev at 100.70.8.13, vps points it at lo.
+git.hartforge.dev {
+	bind 100.70.8.13 127.0.0.1
+	log
+	import secure_headers
+	encode zstd gzip
+	request_body {
+		max_size 512MB
+	}
+	reverse_proxy 127.0.0.1:3002 {
+		header_up X-Real-IP {client_ip}
+	}
+}
+
 jellyfin.hartforge.dev {
 	import protected
 	reverse_proxy http://100.72.198.59:8096 {
@@ -122,6 +152,26 @@ hartforge.dev {
 	import protected
 	root * /opt/landing
 	file_server
+	# static site - strict CSP (inline styles + data: favicon only, no scripts)
+	header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	@assets path *.png *.svg *.ico *.pdf
+	header @assets Cache-Control "public, max-age=86400"
+	@html path / /index.html
+	header @html Cache-Control "public, max-age=600"
+}
+
+# public uptime kuma status page - NO tinyauth on purpose, but only the
+# status-page routes are exposed; everything else (dashboard, socket.io) 404s
+status.hartforge.dev {
+	import protected
+	redir / /status/hartforge 302
+	@public path /status/* /assets/* /api/status-page/* /icon.svg /favicon.ico /apple-touch-icon.png /manifest.json /upload/*
+	handle @public {
+		reverse_proxy 127.0.0.1:3001
+	}
+	handle {
+		respond 404
+	}
 }
 
 gist.hartforge.dev {
@@ -168,4 +218,27 @@ syncthing.hartforge.dev {
 	import protected
 	import tinyauth
 	reverse_proxy 127.0.0.1:8384
+}
+
+hartforge.com {
+	import protected
+	root * /opt/resume
+	file_server
+	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
+	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
+	# mailto renders as [email protected]
+	header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	@assets path *.png *.svg *.ico *.pdf
+	header @assets Cache-Control "public, max-age=86400"
+	@html path / /index.html
+	header @html Cache-Control "public, max-age=600"
+}
+
+www.hartforge.com {
+	import protected
+	redir https://hartforge.com{uri} permanent
+}
+
+harthauling.com, www.harthauling.com {
+	redir https://iharthomes.com{uri} permanent
 }

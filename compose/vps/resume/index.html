@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Patrick Hart - infrastructure engineer, sysadmin, wannabe dev. bank branches by day, homelab by night.">
+<meta name="theme-color" content="#14161a">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hartforge.com/">
+<meta property="og:title" content="Patrick Hart - infrastructure engineer">
+<meta property="og:description" content="infrastructure engineer, sysadmin, wannabe dev. bank branches by day, homelab by night.">
+<meta property="og:image" content="https://hartforge.com/og.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Patrick Hart - infrastructure engineer">
+<meta name="twitter:description" content="infrastructure engineer, sysadmin, wannabe dev. bank branches by day, homelab by night.">
+<meta name="twitter:image" content="https://hartforge.com/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='30' font-weight='650' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
+<title>Patrick Hart - infrastructure engineer</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --surface: #1c1f25;
+    --surface-hover: #22262e;
+    --border: #2a2e36;
+    --fg: #d8dbe0;
+    --muted: #8b909a;
+    --accent: #7aa2f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 4vw, 2rem);
+  }
+  main { max-width: 52rem; margin: 0 auto; }
+
+  /* hero */
+  header { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+  h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 650; letter-spacing: -0.02em; }
+  .tagline { margin-top: 0.5rem; color: var(--muted); font-size: clamp(1rem, 2.5vw, 1.15rem); }
+  .contact { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .contact a {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease;
+  }
+  .contact a:hover { border-color: var(--accent); }
+
+  /* sections */
+  section { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+  h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+    gap: 0.75rem;
+  }
+  .card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: var(--fg);
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  a.card:hover { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-1px); }
+  .card .name { font-weight: 600; display: block; }
+  .card .desc { color: var(--muted); font-size: 0.9rem; margin-top: 0.15rem; display: block; }
+
+  .lede { color: var(--muted); margin-bottom: 1.25rem; }
+  .lede a { color: var(--accent); text-decoration: none; }
+  .lede a:hover { text-decoration: underline; }
+
+  /* story */
+  .story p { margin-bottom: 1rem; }
+  .story a { color: var(--accent); text-decoration: none; }
+  .story a:hover { text-decoration: underline; }
+
+  /* timeline */
+  .job {
+    border-left: 2px solid var(--border);
+    padding: 0 0 1.5rem 1.25rem;
+    position: relative;
+  }
+  .job:last-child { padding-bottom: 0; }
+  .job::before {
+    content: "";
+    position: absolute;
+    left: -6px; top: 0.45rem;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .job .role { font-weight: 600; }
+  .job .when { color: var(--muted); font-size: 0.9rem; }
+  .job p { color: var(--muted); margin-top: 0.35rem; }
+  .job p b { color: var(--fg); font-weight: 600; }
+
+  /* toolbox */
+  .toolgroup { margin-bottom: 1rem; }
+  .toolgroup .label { color: var(--muted); font-size: 0.9rem; display: block; margin-bottom: 0.4rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Patrick Hart</h1>
+    <p class="tagline">infrastructure engineer, sysadmin, wannabe dev. bank branches by day, homelab by night.</p>
+    <nav class="contact">
+      <a href="mailto:resume@hartforge.com">resume@hartforge.com</a>
+      <a href="/resume.pdf">resume.pdf</a>
+    </nav>
+  </header>
+
+  <section>
+    <h2>The day job</h2>
+    <div class="story">
+      <p>
+        I'm an onsite solutions specialist at Navanta (formerly BankOnIT) - tier IV
+        escalation for community bank branches across multiple states. when a branch gets built, moved, or breaks in
+        a way nobody else can figure out, I'm the one who shows up.
+      </p>
+      <p>
+        the stack is regulated banking, end to end: Windows Server, Active Directory, Group
+        Policy, on-prem Exchange, plus the switches, firewalls, and VPN tunnels underneath
+        it all. I run new client onboardings from server build to user migration, untangle
+        MFA and hybrid identity messes, and write PowerShell tooling so the same problem
+        never has to be solved by hand twice.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Before that</h2>
+    <div class="job">
+      <span class="role">Navanta - onsite solutions specialist</span>
+      <span class="when"> · nov 2023 - present</span>
+      <p>the current gig - covered above.</p>
+    </div>
+    <div class="job">
+      <span class="role">Apple - technical specialist</span>
+      <span class="when"> · 2021 - 2023</span>
+      <p>
+        started on the sales floor, promoted to technical specialist in four months. two
+        years of hardware and software troubleshooting across the apple ecosystem, top-tier
+        support metrics, and mentoring newer techs. picked up the Apple support and
+        hardware certifications along the way.
+      </p>
+    </div>
+    <div class="job">
+      <span class="role">Air Comfort Solutions - call center manager</span>
+      <span class="when"> · 2021</span>
+      <p>
+        managed a call center team, administered Office 365, and built the performance
+        standards and processes the team ran on.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Toolbox</h2>
+    <div class="toolgroup">
+      <span class="label">infrastructure</span>
+      <div class="chips">
+        <span class="chip">Windows Server 2016-2022</span>
+        <span class="chip">Active Directory</span>
+        <span class="chip">Group Policy</span>
+        <span class="chip">DNS + DHCP</span>
+        <span class="chip">Exchange (on-prem)</span>
+        <span class="chip">Entra ID / Azure AD</span>
+        <span class="chip">Intune</span>
+      </div>
+    </div>
+    <div class="toolgroup">
+      <span class="label">network + security</span>
+      <div class="chips">
+        <span class="chip">switches, firewalls, gateways</span>
+        <span class="chip">VPN</span>
+        <span class="chip">VLANs</span>
+        <span class="chip">MFA + conditional access</span>
+        <span class="chip">identity troubleshooting</span>
+      </div>
+    </div>
+    <div class="toolgroup">
+      <span class="label">automation + ops</span>
+      <div class="chips">
+        <span class="chip">PowerShell</span>
+        <span class="chip">imaging + rollout workflows</span>
+        <span class="chip">runbooks</span>
+        <span class="chip">incident response</span>
+        <span class="chip">root cause analysis</span>
+      </div>
+    </div>
+    <div class="toolgroup">
+      <span class="label">off the clock</span>
+      <div class="chips">
+        <span class="chip">Proxmox</span>
+        <span class="chip">Linux</span>
+        <span class="chip">Docker</span>
+        <span class="chip">Ansible</span>
+        <span class="chip">Caddy</span>
+        <span class="chip">agentic ops</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Find me</h2>
+    <div class="grid">
+      <a class="card" href="https://github.com/patrickhere">
+        <span class="name">GitHub</span>
+        <span class="desc">github.com/patrickhere</span>
+      </a>
+      <a class="card" href="https://www.linkedin.com/in/patrick--hart/">
+        <span class="name">LinkedIn</span>
+        <span class="desc">linkedin.com/in/patrick--hart</span>
+      </a>
+      <a class="card" href="https://git.hartforge.dev">
+        <span class="name">Forgejo</span>
+        <span class="desc">self-hosted git, where the infrastructure code lives</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>The forge</h2>
+    <p class="lede">
+      hart forge is my homelab - a self-hosted platform I run end to end, managed as code.
+      everything below runs on hardware I own plus one small VPS, with configs versioned in
+      <a href="https://git.hartforge.dev">my forgejo</a>. it's also where the day-job skills
+      get sharpened: identity, networking, automation, monitoring - same problems, my hardware.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <span class="name">Virtualization</span>
+        <span class="desc">Proxmox VE running a mix of VMs and LXC containers</span>
+      </div>
+      <div class="card">
+        <span class="name">Config as code</span>
+        <span class="desc">Ansible playbooks for fleet health checks, updates, and backups</span>
+      </div>
+      <div class="card">
+        <span class="name">Containers</span>
+        <span class="desc">Docker Compose per host, pinned images, automated update watching</span>
+      </div>
+      <div class="card">
+        <span class="name">Edge &amp; security</span>
+        <span class="desc">Caddy reverse proxy with CrowdSec IPS, Cloudflare DNS</span>
+      </div>
+      <div class="card">
+        <span class="name">Identity</span>
+        <span class="desc">passkey-based OIDC SSO with Pocket ID and forward auth</span>
+      </div>
+      <div class="card">
+        <span class="name">Self-hosted git</span>
+        <span class="desc">Forgejo primary on the VPS with a LAN mirror</span>
+      </div>
+      <div class="card">
+        <span class="name">Media &amp; photos</span>
+        <span class="desc">Jellyfin with a fully automated pipeline, Immich for photos</span>
+      </div>
+      <div class="card">
+        <span class="name">Monitoring</span>
+        <span class="desc">Uptime Kuma, Beszel metrics, and ntfy push alerting</span>
+      </div>
+      <div class="card">
+        <span class="name">Agentic ops</span>
+        <span class="desc">a persistent Claude-based agent works the fleet with me - ops, deploys, and this site</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      this site runs on the stack above - agent included. the lab itself lives at
+      <a href="https://hartforge.dev">hartforge.dev</a>.
+    </p>
+  </footer>
+</main>
+</body>
+</html>
