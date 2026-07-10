@@ -158,7 +158,7 @@ hartforge.dev {
 	}
 	# static site CSP - hashed inline script (status dots + buddy easter egg),
 	# connect-src for the kuma heartbeat api
-	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8='; connect-src https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8=' https://static.cloudflareinsights.com; connect-src https://status.hartforge.dev https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html
@@ -237,7 +237,7 @@ hartforge.com {
 	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
 	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
 	# mailto renders as [email protected]
-	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4='; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html
