@@ -25,14 +25,13 @@
 <body>
   <main>
     <h1>404 *</h1>
-    <p><span class="prompt">-&gt;</span> a wild 404 appeared. nothing forged here. <a href="/">back to the anvil</a></p>
+    <p><span class="prompt">-&gt;</span> psyduck is as confused as you are. nothing forged here. <a href="/">back to the anvil</a></p>
   </main>
   <script>
   (function () {
-    var dex = ['pikachu', 'charmander', 'gastly', 'eevee', 'snorlax', 'magikarp', 'ditto', 'porygon', 'cubone', 'dratini', 'rowlet', 'mudkip'];
     var img = document.createElement('img');
-    img.src = '/sprites/' + dex[Math.floor(Math.random() * dex.length)] + '.png';
-    img.width = 96; img.height = 96; img.alt = 'a confused pokemon';
+    img.src = '/sprites/psyduck' + (Math.random() < 1 / 128 ? '-shiny' : '') + '.png';
+    img.width = 96; img.height = 96; img.alt = 'a confused psyduck';
     document.querySelector('main').prepend(img);
   })();
   </script>
