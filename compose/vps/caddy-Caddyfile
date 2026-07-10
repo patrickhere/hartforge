@@ -172,7 +172,12 @@ status.hartforge.dev {
 	redir / /status/hartforge 302
 	@public path /status/* /assets/* /api/status-page/* /icon.svg /favicon.ico /apple-touch-icon.png /manifest.json /upload/*
 	handle @public {
-		header Access-Control-Allow-Origin "https://hartforge.dev"
+		@devOrigin header Origin https://hartforge.dev
+		header @devOrigin Access-Control-Allow-Origin "https://hartforge.dev"
+		@comOrigin header Origin https://hartforge.com
+		header @comOrigin Access-Control-Allow-Origin "https://hartforge.com"
+		@canaryOrigin header Origin https://canary.hartforge.com
+		header @canaryOrigin Access-Control-Allow-Origin "https://canary.hartforge.com"
 		reverse_proxy 127.0.0.1:3001
 	}
 	handle {
@@ -237,7 +242,7 @@ hartforge.com {
 	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
 	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
 	# mailto renders as [email protected]
-	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' 'sha256-UvUKjD+jTt1VLCOdcQVSaFgZhjApGsVmjHdqaDlK+cE=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html

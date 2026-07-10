@@ -9,14 +9,14 @@
 <meta property="og:url" content="https://hartforge.com/">
 <meta property="og:title" content="patrick hart - infrastructure engineer">
 <meta property="og:description" content="infrastructure engineer, sysadmin, tinkerer. bank branches by day, homelab by night.">
-<meta property="og:image" content="https://hartforge.com/og-card.png">
+<meta property="og:image" content="https://hartforge.com/og-mono.png">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="patrick hart - infrastructure engineer">
 <meta name="twitter:description" content="infrastructure engineer, sysadmin, tinkerer. bank branches by day, homelab by night.">
-<meta name="twitter:image" content="https://hartforge.com/og-card.png">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='30' font-weight='650' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
+<meta name="twitter:image" content="https://hartforge.com/og-mono.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='SF Mono,Menlo,Consolas,monospace' font-size='26' font-weight='600' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
 <title>patrick hart - infrastructure engineer</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Patrick Hart","url":"https://hartforge.com","jobTitle":"IT Infrastructure Engineer","email":"mailto:resume@hartforge.com","sameAs":["https://github.com/patrickhere","https://www.linkedin.com/in/patrick--hart/"]}</script>
 <style>
@@ -42,8 +42,16 @@
 
   /* hero */
   header { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
-  h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 650; letter-spacing: -0.02em; }
+  h1 { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
   .tagline { margin-top: 0.5rem; color: var(--muted); font-size: clamp(1rem, 2.5vw, 1.15rem); }
+  .tagline::after {
+    content: "_";
+    color: var(--accent);
+    margin-left: 2px;
+    animation: blink 1.2s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .tagline::after { animation: none; } }
   .contact { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .contact a {
     display: inline-block;
@@ -57,6 +65,8 @@
     transition: border-color 0.15s ease;
   }
   .contact a:hover { border-color: var(--accent); }
+  .contact a.cta { background: var(--accent); border-color: var(--accent); color: #14161a; font-weight: 600; }
+  .contact a.cta:hover { background: #92b3f9; border-color: #92b3f9; }
 
   /* sections */
   section { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
@@ -67,7 +77,11 @@
     letter-spacing: 0.08em;
     color: var(--muted);
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
+  h2::after { content: ""; flex: 1; height: 1px; background: var(--border); }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
@@ -75,26 +89,40 @@
   }
   .card {
     display: block;
-    background: var(--surface);
+    background: none;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 1rem 1.25rem;
     text-decoration: none;
     color: var(--fg);
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
-  a.card:hover { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-1px); }
+  a.card:hover { border-color: var(--accent); background: var(--surface); transform: translateY(-1px); }
+  .deflist .card {
+    background: none;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 0.65rem 0;
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+  }
+  .deflist .card:first-child { border-top: none; padding-top: 0; }
+  .deflist .card .desc { margin-top: 0; }
+  @media (max-width: 40rem) {
+    .deflist .card { grid-template-columns: 1fr; gap: 0.15rem; }
+  }
   .card .name { font-weight: 600; display: block; }
   .card .desc { color: var(--muted); font-size: 0.9rem; margin-top: 0.15rem; display: block; }
 
   .lede { color: var(--muted); margin-bottom: 1.25rem; }
   .lede a { color: var(--accent); text-decoration: none; }
-  .lede a:hover { text-decoration: underline; }
 
   /* story */
   .story p { margin-bottom: 1rem; }
   .story a { color: var(--accent); text-decoration: none; }
-  .story a:hover { text-decoration: underline; }
 
   /* timeline */
   .job {
@@ -117,30 +145,61 @@
   .job p b { color: var(--fg); font-weight: 600; }
 
   /* toolbox */
-  .toolgroup { margin-bottom: 1rem; }
-  .toolgroup .label { color: var(--muted); font-size: 0.9rem; display: block; margin-bottom: 0.4rem; }
-  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .chip {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 0.2rem 0.75rem;
-    font-size: 0.85rem;
+  .toolgroup {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.65rem 0;
+    border-top: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .toolgroup:first-of-type { border-top: none; padding-top: 0; }
+  .toolgroup .label { color: var(--muted); font-size: 0.9rem; }
+  .chips { display: block; }
+  .chip { display: inline; font-size: 0.95rem; }
+  .chip + .chip::before { content: " \00b7  "; color: var(--muted); }
+  @media (max-width: 40rem) {
+    .toolgroup { grid-template-columns: 1fr; gap: 0.15rem; }
   }
 
   footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
   footer a { color: var(--accent); text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
+
+  /* sliding underline on prose links */
+  .story a, .lede a, footer a {
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 0.25s ease;
+  }
+  .story a:hover, .lede a:hover, footer a:hover { background-size: 100% 1px; text-decoration: none; }
+
+  ::selection { background: var(--accent); color: #14161a; }
+
+  .toolgroup, .deflist .card { transition: background 0.15s ease; }
+  .toolgroup:hover, .deflist .card:hover { background: rgba(216, 219, 224, 0.03); }
+
+  /* live forge status in the footer */
+  #lab-status { color: var(--muted); }
+  #lab-status .dot {
+    display: inline-block; width: 0.5em; height: 0.5em;
+    border-radius: 50%; background: var(--muted);
+    position: relative; top: -1px; margin-right: 0.3em;
+  }
+  #lab-status .dot.up { background: #9ece6a; }
+  #lab-status .dot.down { background: #f7768e; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>patrick hart</h1>
-    <p class="tagline">infrastructure engineer, sysadmin, tinkerer. bank branches by day, homelab by night.</p>
+    <p class="tagline">infrastructure engineer, sysadmin, tinkerer. bank branches by day, homelab by night</p>
     <nav class="contact">
       <a href="mailto:resume@hartforge.com">resume@hartforge.com</a>
-      <a href="/resume.pdf" target="_blank" rel="noopener">resume.pdf</a>
+      <a class="cta" href="/resume.pdf" target="_blank" rel="noopener">resume.pdf</a>
     </nav>
   </header>
 
@@ -269,7 +328,7 @@
       <a href="https://git.hartforge.dev" target="_blank" rel="noopener">my forgejo</a>. it's also where the day-job skills
       get sharpened: identity, networking, automation, monitoring. same problems, my hardware.
     </p>
-    <div class="grid">
+    <div class="deflist">
       <div class="card">
         <span class="name">virtualization</span>
         <span class="desc">proxmox VE running a mix of VMs and LXC containers</span>
@@ -325,11 +384,44 @@
 
   <footer>
     <p>
-      this site runs on the stack above, agent included. the lab itself lives at
+      <a id="lab-status" href="https://status.hartforge.dev" target="_blank" rel="noopener"></a>this site
+      runs on the stack above, agent included. the lab itself lives at
       <a href="https://hartforge.dev" target="_blank" rel="noopener">hartforge.dev</a>.
     </p>
   </footer>
 </main>
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var tag = document.querySelector('.tagline');
+  if (tag && !reduce) {
+    var text = tag.textContent;
+    tag.style.minHeight = tag.offsetHeight + 'px';
+    tag.textContent = '';
+    var i = 0;
+    (function type() {
+      if (i <= text.length) {
+        tag.textContent = text.slice(0, i);
+        i++;
+        setTimeout(type, 14);
+      }
+    })();
+  }
+  fetch('https://status.hartforge.dev/api/status-page/heartbeat/hartforge')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var core = ['2', '16', '17', '18', '19', '20', '21'];
+      var up = core.every(function (id) {
+        var b = (d.heartbeatList || {})[id];
+        return b && b.length && b[b.length - 1].status === 1;
+      });
+      document.getElementById('lab-status').innerHTML =
+        '<span class="dot ' + (up ? 'up' : 'down') + '"></span>' +
+        (up ? 'the forge is green' : 'the forge is having a moment') + ' &middot; ';
+    })
+    .catch(function () {});
+})();
+</script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4e3ba917e3894a0a82c616f293fb18f5"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
