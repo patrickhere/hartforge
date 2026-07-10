@@ -242,7 +242,7 @@ hartforge.com {
 	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
 	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
 	# mailto renders as [email protected]
-	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' 'sha256-UvUKjD+jTt1VLCOdcQVSaFgZhjApGsVmjHdqaDlK+cE=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' 'sha256-UvUKjD+jTt1VLCOdcQVSaFgZhjApGsVmjHdqaDlK+cE=' 'sha256-3h41NO8lfCZph2TIU2wbp3SuA7R6kvoc3h16nrJArW8=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html

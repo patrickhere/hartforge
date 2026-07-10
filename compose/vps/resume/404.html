@@ -10,20 +10,32 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #14161a; color: #d8dbe0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
     min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 2rem; text-align: center;
+    padding: 2rem;
   }
-  h1 { font-size: 4rem; font-weight: 650; color: #7aa2f7; }
-  p { color: #8b909a; margin-top: 0.5rem; }
+  main { max-width: 40rem; width: 100%; font-size: 0.95rem; line-height: 2; overflow-wrap: break-word; }
+  .user { color: #7aa2f7; }
+  .err { color: #8b909a; }
   a { color: #7aa2f7; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .cursor { color: #7aa2f7; animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
 </style>
 </head>
 <body>
-  <main>
-    <h1>404</h1>
-    <p>that page isn't here. <a href="/">back to the front</a></p>
-  </main>
+<main>
+  <p><span class="user">patrick@hartforge</span>:~$ cat <span class="miss">/404</span></p>
+  <p class="err">cat: <span class="miss">/404</span>: no such file or directory</p>
+  <p><span class="user">patrick@hartforge</span>:~$ <a href="/">cd ~</a><span class="cursor">_</span></p>
+</main>
+<script>
+(function () {
+  var path = location.pathname || '/404';
+  if (path.length > 60) path = path.slice(0, 57) + '...';
+  document.querySelectorAll('.miss').forEach(function (el) { el.textContent = path; });
+})();
+</script>
 </body>
 </html>
