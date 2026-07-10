@@ -152,6 +152,10 @@ hartforge.dev {
 	import protected
 	root * /opt/landing
 	file_server
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
 	# static site - strict CSP (inline styles + data: favicon only, no scripts)
 	header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
@@ -224,10 +228,14 @@ hartforge.com {
 	import protected
 	root * /opt/resume
 	file_server
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
 	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
 	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
 	# mailto renders as [email protected]
-	header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4='; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html

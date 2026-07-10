@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="how the hart forge homelab is set up - proxmox at home, one small vps at the edge, tailscale in between, everything as code.">
+<meta name="theme-color" content="#14161a">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://hartforge.com/notes/the-forge.html">
+<meta property="og:title" content="how the forge runs">
+<meta property="og:description" content="proxmox at home, one small vps at the edge, tailscale in between, everything as code.">
+<meta property="og:image" content="https://hartforge.com/og.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='30' font-weight='650' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
+<title>how the forge runs - patrick hart</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --surface: #1c1f25;
+    --border: #2a2e36;
+    --fg: #d8dbe0;
+    --muted: #8b909a;
+    --accent: #7aa2f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 4vw, 2rem);
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back:hover { color: var(--accent); }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 650; letter-spacing: -0.02em; margin: 1rem 0 0.25rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 650;
+    margin: 2.25rem 0 0.6rem;
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul { margin: 0 0 1rem 1.25rem; }
+  li { margin-bottom: 0.35rem; }
+  code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.85em;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2.5rem; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="/">&larr; back to hartforge.com</a>
+  <h1>how the forge runs</h1>
+  <p class="meta">july 2026 · the homelab setup, start to finish</p>
+
+  <p>
+    hart forge is two sites and a tunnel: a proxmox box at home doing the heavy lifting,
+    one small VPS doing the public-facing work, and tailscale stitching them together.
+    nothing at home is port-forwarded. everything is config in git.
+  </p>
+
+  <h2>the home side</h2>
+  <p>
+    the proxmox host runs a mix of VMs and LXC containers. the big one is a media VM
+    running jellyfin and the full *arr pipeline - sonarr, radarr, prowlarr, bazarr, the
+    downloaders, plus tdarr for transcodes. a request lands in seerr, gets grabbed,
+    sorted, subtitled, and shows up in jellyfin without me touching anything. storage is
+    a mergerfs pool, so disks can come and go without the layout caring.
+  </p>
+  <p>
+    around it sit smaller guests, each doing one job: caddy as the LAN reverse proxy
+    (wildcard cert via DNS-01), adguard home for DNS, immich for photos, uptime kuma and
+    a beszel hub for monitoring, homepage as the dashboard, and a forgejo mirror of the
+    git server. LXCs where a container is enough, VMs where it isn't.
+  </p>
+  <p>
+    there's also a mac mini on the infra VLAN. it runs the discord bot, the scheduled
+    ops scripts, and the agent (more on that below).
+  </p>
+
+  <h2>the edge</h2>
+  <p>
+    the VPS is small on purpose - 4GB of RAM from IONOS - and it only holds what should
+    survive the house losing power: identity, git, notifications, and a handful of apps
+    worth reaching from anywhere. pocket ID does passkey OIDC, tinyauth handles forward
+    auth for apps that can't do OIDC themselves, forgejo is the primary git server
+    (the LAN one is just a mirror), ntfy pushes alerts to my phone, and calibre-web +
+    shelfmark run the library. <a href="https://status.hartforge.dev" target="_blank" rel="noopener">uptime
+    kuma</a> watches it all from outside.
+  </p>
+  <p>
+    caddy fronts everything, built with xcaddy so the crowdsec bouncer is compiled in.
+    every vhost imports one shared hardening snippet - logging, crowdsec, security
+    headers, compression - so a new service can't accidentally skip the baseline.
+    crowdsec decisions also land in nftables, so banned IPs get dropped at the kernel,
+    not just at the proxy.
+  </p>
+  <p>
+    ingress is cloudflare-only: the firewall accepts 80/443 from cloudflare's published
+    ranges and nothing else, and caddy requires cloudflare's origin-pull client cert on
+    top of that. a weekly job refreshes the ranges in both the firewall and caddy's
+    trusted proxies, because those lists rot. ssh isn't on the internet at all - it
+    listens on tailscale only.
+  </p>
+
+  <h2>everything as code</h2>
+  <p>
+    ansible playbooks cover the fleet: health checks, updates, config backups, drift
+    detection. docker compose files are per host and per service, pinned tags, no
+    <code>:latest</code>, with diun watching for image updates and posting to ntfy.
+    all of it is versioned in forgejo, and a curated public snapshot lives on
+    <a href="https://github.com/patrickhere/hartforge" target="_blank" rel="noopener">github</a> -
+    secrets vaulted or env-injected, a couple of addresses swapped for documentation
+    ranges, otherwise the real configs.
+  </p>
+
+  <h2>monitoring that pages</h2>
+  <p>
+    the rule is push over pull where it matters. uptime kuma probes the services, but
+    the important cron jobs also send heartbeats to kuma push monitors - so a script
+    that silently dies pages me, instead of just not showing up in a log. beszel does
+    lightweight metrics on every host, ntfy delivers everything to my phone, and a
+    deadman check on the VPS watches the house from outside.
+  </p>
+
+  <h2>the agent</h2>
+  <p>
+    the newest piece: a persistent claude-based agent (named paimon, because naming
+    things is the fun part) runs on the mac mini with ssh access to the fleet. it does
+    ops work with me - audits, deployments, debugging, config changes - and it keeps
+    its own memory between sessions, so it knows the infrastructure history as well as
+    i do. a good chunk of what's in the public repo was built or is maintained that
+    way, this page included.
+  </p>
+
+  <h2>what i'd tell past me</h2>
+  <ul>
+    <li>put identity and git off-site first. everything else can burn and rebuild.</li>
+    <li>one shared hardening snippet beats per-service discipline every time.</li>
+    <li>heartbeats over hope - if a cron job matters, make its silence loud.</li>
+    <li>pin your image tags. <code>:latest</code> is how you get surprise 3am debugging.</li>
+    <li>write it down as code from day one. the second host is when it pays off.</li>
+  </ul>
+
+  <footer>
+    questions or ideas? <a href="mailto:resume@hartforge.com">say hi</a> · configs at
+    <a href="https://github.com/patrickhere/hartforge" target="_blank" rel="noopener">github.com/patrickhere/hartforge</a>
+  </footer>
+</main>
+</body>
+</html>
