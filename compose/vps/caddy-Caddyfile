@@ -158,7 +158,7 @@ hartforge.dev {
 	}
 	# static site CSP - hashed inline script (status dots + buddy easter egg),
 	# connect-src for the kuma heartbeat api
-	header Content-Security-Policy "default-src 'none'; script-src 'sha256-G3Q17tSWfgLU/N9oddogGt2LiumuU6Isn7+o9eNO+mo='; connect-src https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-6Qnp5rJMqQhat3Nuqio5yaaeUUG7wUf6CPeT5EcAb28='; connect-src https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html

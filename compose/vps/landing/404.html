@@ -19,12 +19,22 @@
   .prompt { color: #a6e3a1; }
   a { color: #89b4fa; text-decoration: none; }
   a:hover { color: #fab387; }
+  main img { display: block; image-rendering: pixelated; margin-bottom: 0.75rem; }
 </style>
 </head>
 <body>
   <main>
     <h1>404 *</h1>
-    <p><span class="prompt">-&gt;</span> nothing forged here. <a href="/">back to the anvil</a></p>
+    <p><span class="prompt">-&gt;</span> a wild 404 appeared. nothing forged here. <a href="/">back to the anvil</a></p>
   </main>
+  <script>
+  (function () {
+    var dex = ['pikachu', 'charmander', 'gastly', 'eevee', 'snorlax', 'magikarp', 'ditto', 'porygon', 'cubone', 'dratini', 'rowlet', 'mudkip'];
+    var img = document.createElement('img');
+    img.src = '/sprites/' + dex[Math.floor(Math.random() * dex.length)] + '.png';
+    img.width = 96; img.height = 96; img.alt = 'a confused pokemon';
+    document.querySelector('main').prepend(img);
+  })();
+  </script>
 </body>
 </html>

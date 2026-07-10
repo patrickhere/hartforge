@@ -1,0 +1,30 @@
+/* catppuccin mocha, matched to hartforge.dev */
+body,
+.dark {
+  background: #000 !important;
+  color: #cdd6f4 !important;
+  font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace !important;
+}
+h1, .title { color: #cba6f7 !important; }
+.shadow-box {
+  background: #181825 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+.dark .shadow-box { background: #181825 !important; }
+a { color: #89b4fa; }
+a:hover { color: #fab387; }
+.badge { border-radius: 999px !important; font-family: inherit !important; }
+.bg-success, .badge.bg-success { background-color: #a6e3a1 !important; color: #181825 !important; }
+.bg-danger, .badge.bg-danger { background-color: #f38ba8 !important; color: #181825 !important; }
+.bg-warning, .badge.bg-warning { background-color: #f9e2af !important; color: #181825 !important; }
+.bg-maintenance { background-color: #89b4fa !important; color: #181825 !important; }
+.beat-hover-area .beat.up { background-color: #a6e3a1 !important; }
+.beat-hover-area .beat.down { background-color: #f38ba8 !important; }
+.beat-hover-area .beat.pending { background-color: #f9e2af !important; }
+.overall-status { color: #cdd6f4 !important; }
+footer, .footer { color: #6c7086 !important; }
+.alert-heading.p-2 { color: #cdd6f4 !important; }
+.main { font-family: inherit !important; }
+.item-name, .group-title { color: #cdd6f4 !important; }
+.refresh-info, .powered-by, .description { color: #6c7086 !important; }
