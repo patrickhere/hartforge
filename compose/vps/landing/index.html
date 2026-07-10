@@ -48,6 +48,7 @@
   li a:hover { color: var(--peach); }
   li .desc { color: var(--overlay); }
   .prompt { color: var(--green); }
+  li .prompt { color: var(--overlay); }
   .dot {
     display: inline-block; width: .45em; height: .45em;
     border-radius: 50%; background: var(--surface);
@@ -57,6 +58,17 @@
   .spark { cursor: pointer; }
   .buddy { margin-top: 1.4rem; font-size: .9rem; }
   .buddy .desc { color: var(--overlay); }
+  .buddy img {
+    display: block;
+    width: 96px; height: 96px;
+    image-rendering: pixelated;
+    margin: .3rem 0 .1rem;
+    animation: pop .3s ease-out;
+  }
+  @keyframes pop {
+    from { transform: scale(.5) translateY(8px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
   .shiny { color: var(--yellow); }
   footer { margin-top: 2.2rem; font-size: .75rem; color: var(--overlay); }
   footer a { color: var(--overlay); }
@@ -95,19 +107,30 @@
       .catch(function () {});
 
     var dex = ['pikachu', 'charmander', 'gastly', 'eevee', 'snorlax', 'magikarp', 'ditto', 'porygon', 'cubone', 'dratini', 'rowlet', 'mudkip'];
+    var flavor = [
+      'same buddy system as the motd',
+      'it lives on the outpost now',
+      'click the spark to reroll',
+      'no pokeballs on this network',
+      'it has read the caddyfile. it knows too much'
+    ];
     var buddyRow;
-    document.querySelector('.spark').addEventListener('click', function () {
+    function summon() {
       var name = dex[Math.floor(Math.random() * dex.length)];
       var shiny = Math.random() < 1 / 128;
       if (!buddyRow) {
-        buddyRow = document.createElement('p');
+        buddyRow = document.createElement('div');
         buddyRow.className = 'buddy';
         document.querySelector('footer').before(buddyRow);
       }
-      buddyRow.innerHTML = '<span class="prompt">-&gt;</span> buddy: ' +
-        (shiny ? '<span class="shiny">&#10024; shiny ' + name + ' &#10024;</span>' : name) +
-        ' <span class="desc">- same as the motd, 1/128 shiny odds</span>';
-    });
+      var line = shiny
+        ? '<span class="prompt">-&gt;</span> a wild <span class="shiny">&#10024; SHINY ' + name + ' &#10024;</span> appeared <span class="desc">- 1/128. lucky you.</span>'
+        : '<span class="prompt">-&gt;</span> a wild ' + name + ' appeared <span class="desc">- ' + flavor[Math.floor(Math.random() * flavor.length)] + '</span>';
+      buddyRow.innerHTML = line +
+        '<img src="/sprites/' + name + (shiny ? '-shiny' : '') + '.png" alt="' + name + '" width="96" height="96">';
+    }
+    document.querySelector('.spark').addEventListener('click', summon);
+    if (location.hash === '#buddy') summon();
     console.log('%ch a r t   f o r g e %c*', 'color:#cba6f7;letter-spacing:.4em', 'color:#fab387');
     console.log('-> the spark is clickable. the outpost keeps a buddy.');
   })();
