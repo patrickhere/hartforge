@@ -156,8 +156,9 @@ hartforge.dev {
 		rewrite * /404.html
 		file_server
 	}
-	# static site - strict CSP (inline styles + data: favicon only, no scripts)
-	header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	# static site CSP - hashed inline script (status dots + buddy easter egg),
+	# connect-src for the kuma heartbeat api
+	header Content-Security-Policy "default-src 'none'; script-src 'sha256-MjSutkdMAZrSE8w6tlNOyNP/7AAZTyTF2gudWjRoxA8='; connect-src https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html
@@ -171,6 +172,7 @@ status.hartforge.dev {
 	redir / /status/hartforge 302
 	@public path /status/* /assets/* /api/status-page/* /icon.svg /favicon.ico /apple-touch-icon.png /manifest.json /upload/*
 	handle @public {
+		header Access-Control-Allow-Origin "https://hartforge.dev"
 		reverse_proxy 127.0.0.1:3001
 	}
 	handle {
