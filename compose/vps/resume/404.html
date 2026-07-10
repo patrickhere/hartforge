@@ -17,6 +17,8 @@
   main { max-width: 40rem; width: 100%; font-size: 0.95rem; line-height: 2; overflow-wrap: break-word; }
   .user { color: #7aa2f7; }
   .err { color: #8b909a; }
+  .status { font-size: 1.6rem; color: #8b909a; }
+  .status .code { color: #7aa2f7; font-weight: 600; }
   a { color: #7aa2f7; text-decoration: none; }
   a:hover { text-decoration: underline; }
   .cursor { color: #7aa2f7; animation: blink 1.2s steps(1) infinite; }
@@ -26,8 +28,9 @@
 </head>
 <body>
 <main>
-  <p><span class="user">patrick@hartforge</span>:~$ cat <span class="miss">/404</span></p>
-  <p class="err">cat: <span class="miss">/404</span>: no such file or directory</p>
+  <p><span class="user">patrick@hartforge</span>:~$ curl -I hartforge.com<span class="miss">/404</span></p>
+  <p class="status">HTTP/2 <span class="code">404</span></p>
+  <p class="err">not found: the page moved, never existed, or got typo'd</p>
   <p><span class="user">patrick@hartforge</span>:~$ <a href="/">cd ~</a><span class="cursor">_</span></p>
 </main>
 <script>
