@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="what a community bank branch cutover actually takes: the prep, the window, the boring failures, and proving monday morning works.">
+<meta name="theme-color" content="#14161a">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://hartforge.com/notes/branch-cutover.html">
+<meta property="og:title" content="cutting over a branch">
+<meta property="og:description" content="the prep, the window, the boring failures, and proving monday morning works.">
+<meta property="og:image" content="https://hartforge.com/og-card.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='30' font-weight='650' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
+<title>cutting over a branch - patrick hart</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --surface: #1c1f25;
+    --border: #2a2e36;
+    --fg: #d8dbe0;
+    --muted: #8b909a;
+    --accent: #7aa2f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 4vw, 2rem);
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back:hover { color: var(--accent); }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 650; letter-spacing: -0.02em; margin: 1rem 0 0.25rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 650;
+    margin: 2.25rem 0 0.6rem;
+  }
+  p { margin-bottom: 1rem; }
+  b { font-weight: 650; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul { margin: 0 0 1rem 1.25rem; }
+  li { margin-bottom: 0.5rem; }
+  code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.85em;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2.5rem; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="/">&larr; back to hartforge.com</a>
+  <h1>cutting over a branch</h1>
+  <p class="meta">july 2026 · what a weekend cutover actually takes</p>
+
+  <p>
+    a community bank branch cutover is a migration with a deadline you don't get to move:
+    the teller line has to be live when the doors open. you get a window, usually a weekend
+    or an after-hours block, and inside it you replace or rebuild the network, the servers,
+    and every workstation, then prove all of it works before staff walk in. no partial
+    credit. if a teller can't pull up a customer at 9am, the branch calls it a failed
+    cutover no matter how clean the rack looks.
+  </p>
+  <p>
+    that constraint is the whole job. everything below is built around it.
+  </p>
+
+  <h2>before the window</h2>
+  <p>the cutover is mostly won or lost before i show up.</p>
+  <ul>
+    <li>
+      <b>inventory first.</b> every workstation, printer, phone, switch, and the core
+      banking endpoints. i want a list of what's there and what it talks to, because the
+      thing that breaks at 8:45am is always the one device nobody mentioned.
+    </li>
+    <li>
+      <b>configs staged ahead.</b> switch configs written and reviewed, DHCP scopes sized,
+      GPOs confirmed applying in a test OU, profiles and images prepped. i'm not writing a
+      VLAN config at midnight.
+    </li>
+    <li>
+      <b>comms with the branch manager.</b> one contact, a confirmed window, and
+      confirmation that i can actually take the line down. banks have compliance and
+      after-hours access rules, and learning them at the door costs an hour you didn't
+      budget.
+    </li>
+    <li>
+      <b>rollback defined in writing.</b> what abort looks like, the time i pull the
+      trigger, and how the old setup comes back. if there's no rollback there's no cutover,
+      there's a gamble.
+    </li>
+  </ul>
+
+  <h2>the window</h2>
+  <p>order matters. i work bottom up, because nothing above the network works until the network works.</p>
+  <p>
+    <b>network.</b> switch in, uplinks verified, access ports and the voice VLAN configured
+    before anything plugs in. i bring ports up in a controlled order, because a branch
+    patch panel is exactly where a layer 2 loop wants to happen, and an
+    <code>err-disabled</code> port at hour one is a lot cheaper than one at hour six.
+  </p>
+  <p>
+    <b>servers and domain.</b> domain reachable, AD and DNS answering, GPO applying to the
+    branch OU. i confirm that with a real client before i touch a single workstation,
+    because a workstation that joins a half-configured domain is a workstation i get to
+    fix twice.
+  </p>
+  <p>
+    <b>workstations.</b> transwiz for the profile and data migration, then domain join,
+    then confirm the GPO landed. one machine end to end first as the canary, then the rest
+    once the canary is clean.
+  </p>
+  <p>
+    <b>endpoints and peripherals.</b> new endpoint agent installed, the old one removed
+    cleanly. SEP leaves ghosts if you let it, so that's a silent uninstall, not a
+    right-click. printers mapped, phones up on the voice VLAN.
+  </p>
+
+  <h2>where it goes sideways</h2>
+  <p>
+    it always does somewhere. the value isn't that nothing breaks, it's that the breakage
+    is boring and i've seen it before.
+  </p>
+  <ul>
+    <li>
+      <b>port goes err-disabled.</b> usually a loop or a duplicate, occasionally BPDU guard
+      doing its job. i trace the MAC to the port, find the offending cable or device, clear
+      it, and bring the port back up deliberately. i don't just <code>no shut</code> and
+      pray.
+    </li>
+    <li>
+      <b>workstation pulls the wrong IP, or none.</b> DHCP scope exhausted, a stale lease,
+      or the machine landed on the wrong VLAN. a lease lookup on the windows DHCP server
+      tells me which of the three it is in about a minute.
+    </li>
+    <li>
+      <b>GPO not applying.</b> wrong OU, replication lag, or a filter i missed.
+      <code>gpresult</code> on the canary before i roll the fleet, every time, because
+      finding it on machine one is a fix and finding it on machine twenty is a night.
+    </li>
+    <li>
+      <b>phones dead.</b> almost always the voice VLAN, either the port config or the DHCP
+      option. this is exactly why phones come after the network is proven, not during it.
+    </li>
+  </ul>
+
+  <h2>validation</h2>
+  <p>the branch isn't cut over until it's proven, not until it's plugged in.</p>
+  <ul>
+    <li>a real test transaction through the core banking app, not "the app opens."</li>
+    <li>every teller station logs in the way a teller would and pulls a customer.</li>
+    <li>phones dial out and receive.</li>
+    <li>
+      printers print from the machines that need them, including the receipt and check
+      printers, which are always the ones nobody tested.
+    </li>
+  </ul>
+  <p>
+    i walk the line as if i were the staff, station by station. the sign-off is "monday
+    morning works," nothing less.
+  </p>
+
+  <h2>what i standardized</h2>
+  <p>
+    i stopped running cutovers as one-offs early. after the first few, the process itself
+    became the deliverable:
+  </p>
+  <ul>
+    <li>
+      a per-branch checklist that encodes the order above, so the sequence doesn't live in
+      my head.
+    </li>
+    <li>
+      a network baseline, so every branch switch config starts from the same known-good
+      template instead of a blank prompt.
+    </li>
+    <li>
+      a documented transwiz and domain-join flow, so the workstation step is repeatable by
+      whoever is onsite, not just me.
+    </li>
+  </ul>
+  <p>
+    the goal was never to be the person who can cut over a branch. it was to make cutting
+    over a branch a repeatable procedure that survives me not being in the room. that's
+    the part i'm proud of.
+  </p>
+
+  <footer>
+    questions or ideas? <a href="mailto:resume@hartforge.com">say hi</a> · more notes:
+    <a href="/notes/the-forge.html">how the forge runs</a>
+  </footer>
+</main>
+</body>
+</html>
