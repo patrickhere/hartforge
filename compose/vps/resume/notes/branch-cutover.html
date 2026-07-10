@@ -85,9 +85,9 @@
       thing that breaks at 8:45am is always the one device nobody mentioned.
     </li>
     <li>
-      <b>configs staged ahead.</b> switch configs written and reviewed, DHCP scopes sized,
-      GPOs confirmed applying in a test OU, profiles and images prepped. i'm not writing a
-      VLAN config at midnight.
+      <b>everything staged ahead.</b> network configs written and reviewed, policies
+      confirmed working on a test machine, workstation images prepped. the middle of the
+      night is for executing a plan, not writing one.
     </li>
     <li>
       <b>comms with the branch manager.</b> one contact, a confirmed window, and
@@ -105,26 +105,27 @@
   <h2>the window</h2>
   <p>order matters. i work bottom up, because nothing above the network works until the network works.</p>
   <p>
-    <b>network.</b> switch in, uplinks verified, access ports and the voice VLAN configured
-    before anything plugs in. i bring ports up in a controlled order, because a branch
-    patch panel is exactly where a layer 2 loop wants to happen, and an
-    <code>err-disabled</code> port at hour one is a lot cheaper than one at hour six.
+    <b>network.</b> the new switch goes in, connections get verified, and ports come up
+    in a controlled order, because one bad cable in a branch wiring closet can take the
+    whole network down with it. a problem found in hour one is a lot cheaper than the
+    same problem found in hour six.
   </p>
   <p>
-    <b>servers and domain.</b> domain reachable, AD and DNS answering, GPO applying to the
-    branch OU. i confirm that with a real client before i touch a single workstation,
-    because a workstation that joins a half-configured domain is a workstation i get to
-    fix twice.
+    <b>servers and domain.</b> the servers come up next, and i prove they're actually
+    serving: logins working, policies applying. i confirm that with one real machine
+    before touching the rest, because a workstation set up against a half-ready server
+    is a workstation i get to fix twice.
   </p>
   <p>
-    <b>workstations.</b> transwiz for the profile and data migration, then domain join,
-    then confirm the GPO landed. one machine end to end first as the canary, then the rest
-    once the canary is clean.
+    <b>workstations.</b> each person's profile and files move to their new machine, the
+    machine joins the new environment, and i confirm it got everything it should. one
+    machine goes end to end first as the canary. the rest only follow once the canary
+    is clean.
   </p>
   <p>
-    <b>endpoints and peripherals.</b> new endpoint agent installed, the old one removed
-    cleanly. SEP leaves ghosts if you let it, so that's a silent uninstall, not a
-    right-click. printers mapped, phones up on the voice VLAN.
+    <b>endpoints and peripherals.</b> the new security agent installed, the old one
+    removed properly (they leave pieces behind if you let them). printers mapped, phones
+    online.
   </p>
 
   <h2>where it goes sideways</h2>
@@ -134,24 +135,24 @@
   </p>
   <ul>
     <li>
-      <b>port goes err-disabled.</b> usually a loop or a duplicate, occasionally BPDU guard
-      doing its job. i trace the MAC to the port, find the offending cable or device, clear
-      it, and bring the port back up deliberately. i don't just <code>no shut</code> and
-      pray.
+      <b>a network port shuts itself off.</b> usually a cabling mistake tripping a
+      protective feature. i trace it to the actual cable or device, fix the cause, and
+      bring the port back deliberately. turning it back on and hoping is how you get the
+      same outage twice.
     </li>
     <li>
-      <b>workstation pulls the wrong IP, or none.</b> DHCP scope exhausted, a stale lease,
-      or the machine landed on the wrong VLAN. a lease lookup on the windows DHCP server
-      tells me which of the three it is in about a minute.
+      <b>a workstation can't get on the network.</b> there are about three usual reasons,
+      and one lookup on the server tells me which one it is in about a minute. seen it
+      enough times that it's a checklist, not a mystery.
     </li>
     <li>
-      <b>GPO not applying.</b> wrong OU, replication lag, or a filter i missed.
-      <code>gpresult</code> on the canary before i roll the fleet, every time, because
-      finding it on machine one is a fix and finding it on machine twenty is a night.
+      <b>policies not landing on machines.</b> checked on the canary before rolling the
+      fleet, every time, because finding it on machine one is a fix and finding it on
+      machine twenty is a night.
     </li>
     <li>
-      <b>phones dead.</b> almost always the voice VLAN, either the port config or the DHCP
-      option. this is exactly why phones come after the network is proven, not during it.
+      <b>phones dead.</b> almost always a network config detail. this is exactly why
+      phones come after the network is proven, not during it.
     </li>
   </ul>
 
@@ -186,7 +187,7 @@
       template instead of a blank prompt.
     </li>
     <li>
-      a documented transwiz and domain-join flow, so the workstation step is repeatable by
+      a documented workstation migration flow, so that step is repeatable by
       whoever is onsite, not just me.
     </li>
   </ul>
