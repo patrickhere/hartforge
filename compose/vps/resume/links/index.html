@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="patrick hart - all the links in one place.">
+<meta name="theme-color" content="#14161a">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hartforge.com/links/">
+<meta property="og:title" content="patrick hart - links">
+<meta property="og:description" content="all the links in one place.">
+<meta property="og:image" content="https://hartforge.com/og-card.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314161a'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='30' font-weight='650' fill='%237aa2f7' text-anchor='middle'%3Eph%3C/text%3E%3C/svg%3E">
+<title>patrick hart - links</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --surface: #1c1f25;
+    --surface-hover: #22262e;
+    --border: #2a2e36;
+    --fg: #d8dbe0;
+    --muted: #8b909a;
+    --accent: #7aa2f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(1.5rem, 4vw, 3rem) 1rem;
+  }
+  main { width: 100%; max-width: 26rem; text-align: center; }
+  .mark {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 1.8rem; font-weight: 650;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 0.9rem;
+  }
+  h1 { font-size: 1.5rem; font-weight: 650; letter-spacing: -0.01em; }
+  .tagline { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
+  .links { display: flex; flex-direction: column; gap: 0.7rem; }
+  .links a {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1.25rem;
+    color: var(--fg);
+    text-decoration: none;
+    font-weight: 600;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .links a:hover { border-color: var(--accent); background: var(--surface-hover); transform: translateY(-1px); }
+  .links a .sub { display: block; color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+  footer { margin-top: 1.75rem; font-size: 0.8rem; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark">ph</div>
+  <h1>patrick hart</h1>
+  <p class="tagline">infrastructure engineer, sysadmin, tinkerer</p>
+  <nav class="links">
+    <a href="/resume.pdf" target="_blank" rel="noopener">resume<span class="sub">the one-page pdf</span></a>
+    <a href="https://www.linkedin.com/in/patrick--hart/" target="_blank" rel="noopener">linkedin<span class="sub">linkedin.com/in/patrick--hart</span></a>
+    <a href="https://github.com/patrickhere" target="_blank" rel="noopener">github<span class="sub">github.com/patrickhere</span></a>
+    <a href="/notes/branch-cutover.html">cutting over a branch<span class="sub">writeup - what the day job actually looks like</span></a>
+    <a href="/notes/the-forge.html">how the forge runs<span class="sub">writeup - the homelab, start to finish</span></a>
+    <a href="https://hartforge.dev" target="_blank" rel="noopener">hart forge<span class="sub">the homelab itself</span></a>
+    <a href="mailto:resume@hartforge.com">email<span class="sub">resume@hartforge.com</span></a>
+  </nav>
+  <footer>
+    <a href="/">the full site &rarr;</a>
+  </footer>
+</main>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4e3ba917e3894a0a82c616f293fb18f5"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
