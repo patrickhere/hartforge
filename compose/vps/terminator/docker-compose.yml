@@ -15,6 +15,7 @@ services:
       - DefaultAdmin__Password=changeme-on-first-login
       - AuthSettings__ExpirationDays=30
       - UserSettings__DefaultAccountType=Full
+      - AuthSettings__SecretKey=${TERMINATOR_SECRET_KEY}
 
 volumes:
   terminator-data:
