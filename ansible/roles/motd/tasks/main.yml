@@ -10,12 +10,22 @@
   failed_when: false
   tags: [motd]
 
-- name: Download Hart Forge MOTD script
-  ansible.builtin.get_url:
-    url: "{{ motd_repo_url }}"
+- name: Fetch Hart Forge MOTD script on controller
+  ansible.builtin.shell: >
+    /Users/admin/bin/forgejo-cli raw GET "{{ motd_api_path }}"
+    | python3 -c "import json,sys,base64; sys.stdout.write(base64.b64decode(json.load(sys.stdin)['content']).decode())"
+    > {{ motd_fetch_dest }}
+  delegate_to: localhost
+  run_once: true
+  become: false
+  changed_when: false
+  tags: [motd]
+
+- name: Install Hart Forge MOTD script
+  ansible.builtin.copy:
+    src: "{{ motd_fetch_dest }}"
     dest: /etc/update-motd.d/10-hartforge
     mode: '0755'
-    force: true
   tags: [motd]
 
 - name: Create hartforge.conf for service check

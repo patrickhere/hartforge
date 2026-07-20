@@ -1,6 +1,6 @@
 services:
   forgejo:
-    image: codeberg.org/forgejo/forgejo:14
+    image: codeberg.org/forgejo/forgejo:15.0.5
     container_name: forgejo
     environment:
       - USER_UID=1000
@@ -13,6 +13,17 @@ services:
       - 3000:3000
       - 2222:22
     restart: unless-stopped
+
+  beszel-agent:
+    image: henrygd/beszel-agent:0.18.7
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PORT: '45876'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATsQ2RzWzPcUH8caRipiZe7lEnHf+/cNHeBiq3iQiUy'
 
 volumes:
   forgejo-data:

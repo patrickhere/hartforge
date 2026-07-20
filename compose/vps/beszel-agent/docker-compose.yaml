@@ -13,4 +13,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       PORT: '45876'
-      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGgO9vRTsWK/pEov7Zw8ce63V/ZCX1IOSTPXTetnp8/F'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATsQ2RzWzPcUH8caRipiZe7lEnHf+/cNHeBiq3iQiUy'

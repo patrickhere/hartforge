@@ -1,14 +1,15 @@
 ---
 # Create and bootstrap LXCs on Proxmox from definitions.
-# Usage: ansible-playbook playbooks/provision-lxc.yml
+# Usage: ansible-playbook playbooks/provision-lxc.yml --limit prox-svr1
 #   -e target=caddy              Provision a single LXC by hostname
 #   -e target=all                Provision all defined LXCs
 #
 # Requires: Proxmox API token in vars/secrets.yml (vault-encrypted)
-# Definitions: inventory/host_vars/prox-svr1.yml -> lxc_definitions
+# Definitions: inventory/host_vars/<node>.yml -> lxc_definitions (per-node, e.g. prox-svr1.yml, prox-svr2.yml)
+# Always pass --limit to a single node - without it this runs against every host in the proxmox group
 
 - name: Provision LXCs on Proxmox
-  hosts: prox-svr1
+  hosts: proxmox
   gather_facts: false
   vars:
     target: ""
@@ -33,6 +34,7 @@
         api_user: "{{ proxmox_api_user }}"
         api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
+        node: "{{ proxmox_node }}"
         vmid: "{{ item.vmid }}"
         hostname: "{{ item.hostname }}"
         ostemplate: "{{ item.template }}"

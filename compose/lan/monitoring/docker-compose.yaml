@@ -1,23 +1,58 @@
 services:
+  beszel:
+    image: henrygd/beszel:0.18.7
+    container_name: beszel
+    ports:
+      - 8090:8090
+    volumes:
+      - beszel-data:/beszel_data
+    restart: unless-stopped
+
+  beszel-agent:
+    image: henrygd/beszel-agent:0.18.7
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PORT: '45876'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGgO9vRTsWK/pEov7Zw8ce63V/ZCX1IOSTPXTetnp8/F'
+
   grafana:
-    image: grafana/grafana:12
+    image: grafana/grafana:13.1.0
     container_name: grafana
     ports:
       - 3000:3000
     volumes:
       - grafana-data:/var/lib/grafana
-      - /opt/monitoring/grafana-provisioning:/etc/grafana/provisioning
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
+      - GF_SECURITY_ADMIN_USER=patrick
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SERVER_ROOT_URL=https://grafana.hartforge.dev
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Pocket ID
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=${GRAFANA_OIDC_CLIENT_ID}
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=${GRAFANA_OIDC_CLIENT_SECRET}
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://pocket-id.hartforge.dev/authorize
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=https://pocket-id.hartforge.dev/api/oidc/token
+      - GF_AUTH_GENERIC_OAUTH_API_URL=https://pocket-id.hartforge.dev/api/oidc/userinfo
+      - GF_AUTH_GENERIC_OAUTH_USE_PKCE=true
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH='Admin'
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v3
+    image: prom/prometheus:v3.13.1
     container_name: prometheus
     ports:
       - 9090:9090
     volumes:
-      - /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -28,34 +63,28 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:3
+    image: grafana/loki:3.7.3
     container_name: loki
     ports:
       - 3100:3100
     volumes:
-      - /opt/monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     restart: unless-stopped
 
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    ports:
-      - 9100:9100
-    restart: unless-stopped
-
   alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.15.0
     container_name: alloy
     volumes:
-      - /opt/monitoring/alloy-config.alloy:/etc/alloy/config.alloy
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
       - /var/log:/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: run /etc/alloy/config.alloy
     restart: unless-stopped
 
 volumes:
+  beszel-data:
   grafana-data:
   prometheus-data:
   loki-data:

@@ -1,0 +1,8 @@
+base-url: https://ntfy.hartforge.dev
+upstream-base-url: https://ntfy.sh
+behind-proxy: true
+auth-default-access: deny-all
+auth-file: /var/cache/ntfy/user.db
+enable-login: true
+cache-file: /var/cache/ntfy/cache.db
+cache-duration: 12h

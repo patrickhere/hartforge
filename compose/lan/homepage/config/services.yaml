@@ -124,10 +124,6 @@
           url: http://10.1.0.57:3000
           username: admin
           password: REDACTED_GRAFANA_PASS
-    - Dozzle:
-        href: https://logs.hartforge.dev
-        description: Container Logs
-        icon: dozzle
     - Prometheus:
         href: https://prometheus.hartforge.dev
         description: Metrics

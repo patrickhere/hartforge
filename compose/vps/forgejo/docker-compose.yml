@@ -1,6 +1,6 @@
 services:
   forgejo:
-    image: codeberg.org/forgejo/forgejo:15.0
+    image: codeberg.org/forgejo/forgejo:15.0.5
     container_name: forgejo
     restart: unless-stopped
     mem_limit: 768m
@@ -14,14 +14,14 @@ services:
       start_period: 30s
     ports:
       - "127.0.0.1:3002:3000"
-      - "100.70.8.13:3002:3000"
-      - "100.70.8.13:2222:22"
+      - "172.16.98.2:3002:3000"
+      - "172.16.98.2:2222:22"
     volumes:
       - data:/data
     environment:
       FORGEJO__server__ROOT_URL: "https://git.hartforge.dev/"
       FORGEJO__server__DOMAIN: "git.hartforge.dev"
-      FORGEJO__server__SSH_DOMAIN: "100.70.8.13"
+      FORGEJO__server__SSH_DOMAIN: "172.16.98.2"
       FORGEJO__server__SSH_PORT: "2222"
       FORGEJO__server__SSH_LISTEN_PORT: "22"
       FORGEJO__service__DISABLE_REGISTRATION: "true"

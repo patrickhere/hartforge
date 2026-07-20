@@ -50,12 +50,12 @@
       debug:
         msg: "{{ iptables_rules.stdout_lines }}"
 
-    - name: Check Tailscale status
-      command: tailscale status
-      register: tailscale_status
+    - name: Check WireGuard status
+      command: wg show wg-s2s
+      register: wireguard_status
       changed_when: false
       failed_when: false
 
-    - name: Show Tailscale status
+    - name: Show WireGuard status
       debug:
-        msg: "{{ tailscale_status.stdout_lines }}"
+        msg: "{{ wireguard_status.stdout_lines }}"

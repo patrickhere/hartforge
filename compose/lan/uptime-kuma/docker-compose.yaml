@@ -1,12 +1,23 @@
 services:
   uptime-kuma:
-    image: louislam/uptime-kuma:1
+    image: louislam/uptime-kuma:1.23.17
     container_name: uptime-kuma
     volumes:
       - uptime-kuma-data:/app/data
     ports:
       - 3001:3001
     restart: unless-stopped
+
+  beszel-agent:
+    image: henrygd/beszel-agent:0.18.7
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PORT: '45876'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATsQ2RzWzPcUH8caRipiZe7lEnHf+/cNHeBiq3iQiUy'
 
 volumes:
   uptime-kuma-data:

@@ -1,6 +1,6 @@
 services:
   power-tools:
-    image: ghcr.io/immich-power-tools/immich-power-tools:v0.20.1
+    image: ghcr.io/immich-power-tools/immich-power-tools:v0.22.0
     container_name: immich-power-tools
     restart: unless-stopped
     ports:

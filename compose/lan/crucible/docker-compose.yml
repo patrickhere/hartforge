@@ -10,9 +10,9 @@ services:
   # ── Media Server ──────────────────────────────────────────────
 
   jellyfin:
-    image: lscr.io/linuxserver/jellyfin:10.11.6ubu2404-ls23
+    image: lscr.io/linuxserver/jellyfin:10.11.11ubu2404-ls41
     container_name: jellyfin
-    runtime: nvidia
+    # runtime: nvidia  # GPU absent since 07-2026 revival
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -24,7 +24,7 @@ services:
       - ${MEDIA_DIRECTORY}:/data
       - ${INSTALL_DIRECTORY}/config/jellyfin:/config
     ports:
-      - 8096:8096
+      - "10.1.0.52:8096:8096"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
   # ── Arr Stack ─────────────────────────────────────────────────
 
   sonarr:
-    image: lscr.io/linuxserver/sonarr:4.0.16.2944-ls304
+    image: lscr.io/linuxserver/sonarr:4.0.19.2979-ls319
     container_name: sonarr
     environment:
       - PUID=${PUID}
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   radarr:
-    image: lscr.io/linuxserver/radarr:6.0.4.10291-ls295
+    image: lscr.io/linuxserver/radarr:6.3.0.10514-ls311
     container_name: radarr
     environment:
       - PUID=${PUID}
@@ -63,24 +63,8 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
 
-  lidarr:
-    image: lscr.io/linuxserver/lidarr:3.1.0.4875-ls22
-    container_name: lidarr
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${MEDIA_DIRECTORY}:/data
-      - ${INSTALL_DIRECTORY}/config/lidarr:/config
-    ports:
-      - 8686:8686
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
-
   bazarr:
-    image: lscr.io/linuxserver/bazarr:v1.5.6-ls341
+    image: lscr.io/linuxserver/bazarr:v1.6.0-ls355
     container_name: bazarr
     environment:
       - PUID=${PUID}
@@ -96,7 +80,7 @@ services:
     restart: unless-stopped
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:2.3.0.5236-ls139
+    image: lscr.io/linuxserver/prowlarr:2.4.0.5397-ls154
     container_name: prowlarr
     environment:
       - PUID=${PUID}
@@ -112,25 +96,8 @@ services:
 
   # ── Download Clients ──────────────────────────────────────────
 
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:5.1.4-r2-ls445
-    container_name: qbittorrent
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - WEBUI_PORT=8081
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${MEDIA_DIRECTORY}:/data
-      - ${INSTALL_DIRECTORY}/config/qbittorrent:/config
-    ports:
-      - 8081:8081
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
-
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:4.5.5-ls245
+    image: lscr.io/linuxserver/sabnzbd:5.0.4-ls262
     container_name: sabnzbd
     environment:
       - PUID=${PUID}
@@ -147,7 +114,7 @@ services:
     restart: unless-stopped
 
   unpackerr:
-    image: ghcr.io/unpackerr/unpackerr:latest
+    image: ghcr.io/unpackerr/unpackerr:v0.15.2
     container_name: unpackerr
     environment:
       - TZ=${TZ}
@@ -155,8 +122,6 @@ services:
       - UN_SONARR_0_API_KEY=${SONARR_API_KEY}
       - UN_RADARR_0_URL=http://radarr:7878
       - UN_RADARR_0_API_KEY=${RADARR_API_KEY}
-      - UN_LIDARR_0_URL=http://lidarr:8686
-      - UN_LIDARR_0_API_KEY=${LIDARR_API_KEY}
       - UN_SABNZBD_0_URL=http://sabnzbd:8080
       - UN_SABNZBD_0_API_KEY=${SABNZBD_API_KEY}
     volumes:
@@ -168,7 +133,7 @@ services:
   # ── Media Utilities ───────────────────────────────────────────
 
   seerr:
-    image: ghcr.io/seerr-team/seerr:latest
+    image: ghcr.io/seerr-team/seerr:v3.3.0
     container_name: seerr
     init: true
     environment:
@@ -177,39 +142,53 @@ services:
       - ${INSTALL_DIRECTORY}/config/seerr:/app/config
     ports:
       - 5055:5055
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
       start_period: 20s
       timeout: 3s
       interval: 15s
       retries: 3
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr:latest
+    image: ghcr.io/recyclarr/recyclarr:8.7.0
     container_name: recyclarr
     environment:
       - TZ=${TZ}
     volumes:
       - ${INSTALL_DIRECTORY}/config/recyclarr:/config
-    security_opt:
-      - no-new-privileges:true
     read_only: true
     tmpfs:
       - /tmp
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   profilarr:
-    image: santiagosayshey/profilarr:latest
+    image: ghcr.io/dictionarry-hub/profilarr:latest
     container_name: profilarr
     environment:
+      - PUID=1000
+      - PGID=1000
       - TZ=${TZ}
+      - PARSER_HOST=profilarr-parser
+      - PARSER_PORT=5000
     volumes:
-      - ${INSTALL_DIRECTORY}/config/profilarr:/config
+      - ${INSTALL_DIRECTORY}/config/profilarr-v2:/config
     ports:
       - 6868:6868
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    depends_on:
+      profilarr-parser:
+        condition: service_healthy
+
+  profilarr-parser:
+    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
+    container_name: profilarr-parser
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -223,17 +202,17 @@ services:
       - POSTGRES_PASSWORD=${JELLYSTAT_POSTGRES_PASSWORD}
     volumes:
       - ${INSTALL_DIRECTORY}/config/jellystat-db:/var/lib/postgresql/data
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d jfstat"]
       interval: 10s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   jellystat:
-    image: cyfershepard/jellystat:latest
+    image: cyfershepard/jellystat:1.1.11
     container_name: jellystat
     environment:
       - PUID=${PUID}
@@ -247,19 +226,19 @@ services:
       - ${INSTALL_DIRECTORY}/config/jellystat:/app/backend/backup-data
     ports:
       - 3000:3000
-    security_opt:
-      - no-new-privileges:true
     depends_on:
       jellystat-db:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   # ── Live TV ───────────────────────────────────────────────
 
   tunarr:
-    image: chrisbenincasa/tunarr:latest
+    image: chrisbenincasa/tunarr:1.3.8
     container_name: tunarr
-    runtime: nvidia
+    # runtime: nvidia  # GPU absent since 07-2026 revival
     environment:
       - TZ=${TZ}
       - TUNARR_SERVER_TRUST_PROXY=true
@@ -299,26 +278,6 @@ services:
 
   # ── Observability ─────────────────────────────────────────────
 
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: dozzle
-    environment:
-      - TZ=${TZ}
-      - DOZZLE_AUTH_PROVIDER=forward-proxy
-      - DOZZLE_AUTH_HEADER_USER=X-Authentik-Username
-      - DOZZLE_AUTH_HEADER_EMAIL=X-Authentik-Email
-      - DOZZLE_AUTH_HEADER_NAME=X-Authentik-Name
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - 9999:8080
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-    restart: unless-stopped
-
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -333,9 +292,9 @@ services:
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   alloy:
@@ -360,9 +319,9 @@ services:
       - /var/lib/docker:/var/lib/docker:ro
     ports:
       - 8088:8080
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   exportarr-sonarr:
@@ -375,9 +334,9 @@ services:
       - API_KEY=${SONARR_API_KEY}
     ports:
       - 9707:9707
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   exportarr-radarr:
@@ -390,9 +349,9 @@ services:
       - API_KEY=${RADARR_API_KEY}
     ports:
       - 9708:9708
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   exportarr-prowlarr:
@@ -405,24 +364,9 @@ services:
       - API_KEY=${PROWLARR_API_KEY}
     ports:
       - 9709:9709
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    restart: unless-stopped
-
-  exportarr-lidarr:
-    image: ghcr.io/onedr0p/exportarr:latest
-    container_name: exportarr-lidarr
-    command: lidarr
-    environment:
-      - PORT=9710
-      - URL=http://lidarr:8686
-      - API_KEY=${LIDARR_API_KEY}
-    ports:
-      - 9710:9710
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   exportarr-sabnzbd:
@@ -435,17 +379,16 @@ services:
       - API_KEY=${SABNZBD_API_KEY}
     ports:
       - 9711:9711
+    read_only: true
     security_opt:
       - no-new-privileges:true
-    read_only: true
     restart: unless-stopped
 
   # ── Transcode Automation ─────────────────────────────────────
 
   tdarr:
-    image: ghcr.io/haveagitgat/tdarr:2.66.01
+    image: ghcr.io/haveagitgat/tdarr:2.83.01
     container_name: tdarr
-    runtime: nvidia
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -458,8 +401,6 @@ services:
       - inContainer=true
       - ffmpegVersion=7
       - nodeName=CrucibleNode
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${INSTALL_DIRECTORY}/config/tdarr/server:/app/server
@@ -487,3 +428,33 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
+
+  wizarr:
+    image: ghcr.io/wizarrrr/wizarr:v2026.7.1
+    container_name: wizarr
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/wizarr:/data/database
+    ports:
+      - 5690:5690
+    restart: unless-stopped
+
+  # ── Stream Monitoring ────────────────────────────────────────
+
+  tracearr:
+    image: ghcr.io/connorgallopo/tracearr:supervised-1.5.0
+    container_name: tracearr
+    shm_size: 512mb
+    mem_limit: 3g
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/tracearr/postgres:/data/postgres
+      - ${INSTALL_DIRECTORY}/config/tracearr/redis:/data/redis
+      - ${INSTALL_DIRECTORY}/config/tracearr/data:/data/tracearr
+      - ${INSTALL_DIRECTORY}/config/tracearr/backup:/data/backup
+    ports:
+      - 3001:3000
+    restart: unless-stopped
+

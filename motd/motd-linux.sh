@@ -2,7 +2,7 @@
 # HartForge MOTD (Linux) — Catppuccin Mocha, with a small Pokémon buddy when available.
 # Sprite sits left of the stat panel when it fits $COLUMNS, else stacks below.
 # If pokemon-colorscripts isn't installed, the Buddy row and sprite are skipped gracefully.
-# Shared across all Linux hosts; the subtitle nickname is resolved by Tailscale IP below.
+# Shared across all Linux hosts; the subtitle nickname is resolved by host IP below.
 
 export PATH="$PATH:/usr/local/bin:/root/.local/bin:$HOME/.local/bin"
 
@@ -20,14 +20,16 @@ HNAME=$(hostname -s 2>/dev/null || hostname)
 OSV=$(grep ^PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
 DATE=$(date '+%A, %B %-d · %H:%M')
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
-TS=""
-if command -v tailscale &>/dev/null; then TS="$(tailscale ip -4 2>/dev/null | head -1)"; fi
-
-# HartForge blacksmith naming scheme, keyed off Tailscale IP (stable per host)
-case "$TS" in
-  100.70.8.13) NICK="the outpost" ;;  # VPS — remote/cloud
-  *)           NICK="$HNAME" ;;
-esac
+# HartForge blacksmith naming scheme, keyed off host IPs (any-match, order-proof)
+NICK="$HNAME"
+for hip in $(hostname -I 2>/dev/null); do
+  case "$hip" in
+    203.0.113.10) NICK="the outpost"; break ;;  # VPS — remote/cloud
+    10.1.0.50) NICK="the forge"; break ;;   # Proxmox — everything is forged from it
+    10.1.0.52) NICK="the crucible"; break ;; # crucible VM — combined media stack
+    10.1.0.49) NICK="the annex"; break ;;   # prox-svr2 — secondary Proxmox node
+  esac
+done
 
 # uptime
 UPTIME=$(uptime -p 2>/dev/null | sed 's/^up //')

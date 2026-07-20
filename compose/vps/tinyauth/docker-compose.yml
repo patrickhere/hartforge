@@ -1,6 +1,6 @@
 services:
   tinyauth:
-    image: ghcr.io/steveiliop56/tinyauth:v5
+    image: ghcr.io/tinyauthapp/tinyauth:v5.1.0
     container_name: tinyauth
     restart: unless-stopped
     env_file: .env
@@ -12,6 +12,6 @@ services:
     read_only: true
     ports:
       - "127.0.0.1:3080:3000"
-      - "100.70.8.13:3080:3000"
+      - "172.16.98.2:3080:3000"
     volumes:
       - ./data:/data

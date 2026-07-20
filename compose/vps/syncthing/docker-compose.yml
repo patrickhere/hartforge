@@ -1,6 +1,6 @@
 services:
   syncthing:
-    image: lscr.io/linuxserver/syncthing:v2.1.1-ls222
+    image: lscr.io/linuxserver/syncthing:v2.1.2-ls224
     container_name: syncthing
     environment:
       - PUID=0

@@ -86,8 +86,16 @@ pocket-id.hartforge.dev {
 
 uptime-ext.hartforge.dev {
 	import protected
-	import tinyauth
-	reverse_proxy 127.0.0.1:3001
+
+	@push path /api/push/*
+	handle @push {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	handle {
+		import tinyauth
+		reverse_proxy 127.0.0.1:3001
+	}
 }
 
 git.hartforge.dev {
@@ -100,11 +108,11 @@ git.hartforge.dev {
 	}
 }
 
-# internal-only git listener (tailscale + loopback) - bypasses cloudflare so
+# internal-only git listener (wg tunnel + loopback) - bypasses cloudflare so
 # large pushes dodge the 100MB body cap and mtls doesnt apply. /etc/hosts on
-# the mac mini points git.hartforge.dev at 100.70.8.13, vps points it at lo.
+# the mac mini points git.hartforge.dev at 172.16.98.2, vps points it at lo.
 git.hartforge.dev {
-	bind 100.70.8.13 127.0.0.1
+	bind 172.16.98.2 127.0.0.1
 	log
 	import secure_headers
 	encode zstd gzip
@@ -118,7 +126,7 @@ git.hartforge.dev {
 
 jellyfin.hartforge.dev {
 	import protected
-	reverse_proxy http://100.72.198.59:8096 {
+	reverse_proxy http://10.1.0.52:8096 {
 		header_up X-Real-IP {client_ip}
 		header_up X-Forwarded-Host {host}
 		transport http {
@@ -130,7 +138,7 @@ jellyfin.hartforge.dev {
 
 wizarr.hartforge.dev {
 	import protected
-	reverse_proxy http://100.72.198.59:5690 {
+	reverse_proxy http://10.1.0.52:5690 {
 		flush_interval -1
 	}
 }
@@ -138,12 +146,12 @@ wizarr.hartforge.dev {
 tracearr.hartforge.dev {
 	import protected
 	import tinyauth
-	reverse_proxy http://100.72.198.59:3001
+	reverse_proxy http://10.1.0.52:3001
 }
 
 seerr.hartforge.dev {
 	import protected
-	reverse_proxy http://100.72.198.59:5055 {
+	reverse_proxy http://10.1.0.52:5055 {
 		flush_interval -1
 	}
 }
@@ -158,11 +166,15 @@ hartforge.dev {
 	}
 	# static site CSP - hashed inline script (status dots + buddy easter egg),
 	# connect-src for the kuma heartbeat api
-	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8=' https://static.cloudflareinsights.com; connect-src https://status.hartforge.dev https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8=' 'sha256-8ZTGMbNDQLk69fEL1jSo0Ak3FNIWuslf8bQDwfTe6FU=' https://static.cloudflareinsights.com; connect-src https://status.hartforge.dev https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html
 	header @html Cache-Control "public, max-age=600"
+	# never serve repo internals (rsync excludes these; belt and braces)
+	respond /.git* 404
+	respond /_src* 404
+	respond /tools* 404
 }
 
 # public uptime kuma status page - NO tinyauth on purpose, but only the
@@ -178,6 +190,8 @@ status.hartforge.dev {
 		header @comOrigin Access-Control-Allow-Origin "https://hartforge.com"
 		@canaryOrigin header Origin https://canary.hartforge.com
 		header @canaryOrigin Access-Control-Allow-Origin "https://canary.hartforge.com"
+		@canaryDevOrigin header Origin https://canary.hartforge.dev
+		header @canaryDevOrigin Access-Control-Allow-Origin "https://canary.hartforge.dev"
 		reverse_proxy 127.0.0.1:3001
 	}
 	handle {
@@ -192,6 +206,7 @@ gist.hartforge.dev {
 
 term.hartforge.dev {
 	import protected
+	import tinyauth
 	reverse_proxy 127.0.0.1:8787
 }
 
@@ -212,7 +227,7 @@ term.hartforge.dev {
 #	crowdsec
 #	import tinyauth
 #	import secure_headers
-#	reverse_proxy 100.112.186.36:7001
+#	reverse_proxy 10.1.0.81:7001
 # }
 
 books.hartforge.dev {
@@ -242,11 +257,103 @@ hartforge.com {
 	# static site CSP - script-src self is REQUIRED for cloudflare scrape shield
 	# email obfuscation (/cdn-cgi/scripts/email-decode.min.js), else the contact
 	# mailto renders as [email protected]
-	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-jUz/hjCU0AcOeX9MWFpaTHGmYa+PbGtbKgE3gQ6PgX4=' 'sha256-UvUKjD+jTt1VLCOdcQVSaFgZhjApGsVmjHdqaDlK+cE=' 'sha256-3h41NO8lfCZph2TIU2wbp3SuA7R6kvoc3h16nrJArW8=' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-LSHsRXjiZyiBkdt2qyKszRjEKyYT9FzPdfePihtCxSU=' 'sha256-3h41NO8lfCZph2TIU2wbp3SuA7R6kvoc3h16nrJArW8=' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 	@assets path *.png *.svg *.ico *.pdf
 	header @assets Cache-Control "public, max-age=86400"
 	@html path / /index.html
 	header @html Cache-Control "public, max-age=600"
+	# stable URL, same body for everyone - safe to cache (unlike the / rewrite)
+	@txt path /resume.txt
+	header @txt Cache-Control "public, max-age=600"
+	# rss feed - explicit type + short cache (must not fall into the 86400 asset rule)
+	header /feed.xml Content-Type "application/rss+xml; charset=utf-8"
+	header /feed.xml Cache-Control "public, max-age=600"
+	handle_path /api/anvil/* {
+		reverse_proxy 127.0.0.1:8090
+	}
+	redir /rss /feed.xml
+	redir /feed /feed.xml
+	redir /til /writing/ permanent
+	redir /til/ /writing/ permanent
+	redir /til/index.html /writing/ permanent
+	redir /notes /writing/ permanent
+	redir /notes/ /writing/ permanent
+	redir /notes/index.html /writing/ permanent
+	# terminal clients get the plain-text resume at / (powershell covers the
+	# windows powershell 5.1 `curl` alias for invoke-webrequest)
+	@cli {
+		header_regexp User-Agent (?i)(curl|wget|httpie|powershell)
+		path /
+	}
+	handle @cli {
+		rewrite * /resume.txt
+		header Cache-Control "no-store"
+		header Content-Type "text/plain; charset=utf-8"
+		# GUARD: never add a cloudflare cache rule for "/" - this branch serves
+		# two bodies by UA under one cache key. "/" has no extension so CF won't
+		# edge-cache it by default; any future CF cache rule MUST exclude "/".
+	}
+	# never serve repo internals (rsync excludes these; belt and braces)
+	respond /.git* 404
+	respond /_src* 404
+	respond /tools* 404
+}
+
+# bare `curl hartforge.com` arrives over plain http (curl defaults to http,
+# and caddy's implicit auto-https redirect answers with an empty 308). this
+# explicit http block serves CLI user agents the plain-text resume and 308s
+# everyone else to https. no mtls here (tls directives don't apply to http
+# listeners) - ufw only allows 80 from cloudflare ranges anyway.
+http://hartforge.com {
+	log
+	crowdsec
+	import secure_headers
+	encode zstd gzip
+	@cli {
+		header_regexp User-Agent (?i)(curl|wget|httpie|powershell)
+		path /
+	}
+	handle @cli {
+		root * /opt/resume
+		rewrite * /resume.txt
+		header Cache-Control "no-store"
+		header Content-Type "text/plain; charset=utf-8"
+		file_server
+	}
+	handle {
+		redir https://hartforge.com{uri} permanent
+	}
+}
+
+# bare `curl canary.hartforge.com` arrives over plain http (curl defaults to
+# http, and caddy's implicit auto-https redirect answers with an empty 308).
+# this explicit http block serves CLI user agents the plain-text resume and
+# 308s everyone else to https. no mtls here (tls directives don't apply to
+# http listeners) - ufw only allows 80 from cloudflare ranges anyway.
+http://canary.hartforge.com {
+	log
+	crowdsec
+	# staging gate - creds in ~/bin/.env on the mini (CANARY_USER/CANARY_PASS)
+	basic_auth {
+		patrick REDACTED_BCRYPT_HASH
+	}
+	import secure_headers
+	encode zstd gzip
+	@cli {
+		header_regexp User-Agent (?i)(curl|wget|httpie|powershell)
+		path /
+	}
+	handle @cli {
+		root * /opt/resume-canary
+		rewrite * /resume.txt
+		header Cache-Control "no-store"
+		header Content-Type "text/plain; charset=utf-8"
+		header X-Robots-Tag "noindex, nofollow"
+		file_server
+	}
+	handle {
+		redir https://canary.hartforge.com{uri} permanent
+	}
 }
 
 www.hartforge.com {
@@ -254,9 +361,14 @@ www.hartforge.com {
 	redir https://hartforge.com{uri} permanent
 }
 
-# staging for hartforge.com redesign review - not for indexing
+# staging for hartforge.com - not for indexing. mirrors prod (CSP, cache,
+# UA rewrite) so a canary soak actually proves prod behavior.
 canary.hartforge.com {
 	import protected
+	# staging gate - creds in ~/bin/.env on the mini (CANARY_USER/CANARY_PASS)
+	basic_auth {
+		patrick REDACTED_BCRYPT_HASH
+	}
 	root * /opt/resume-canary
 	file_server
 	header X-Robots-Tag "noindex, nofollow"
@@ -264,6 +376,64 @@ canary.hartforge.com {
 		rewrite * /404.html
 		file_server
 	}
+	header Content-Security-Policy "default-src 'none'; script-src 'self' 'sha256-LSHsRXjiZyiBkdt2qyKszRjEKyYT9FzPdfePihtCxSU=' 'sha256-3h41NO8lfCZph2TIU2wbp3SuA7R6kvoc3h16nrJArW8=' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://status.hartforge.dev; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	# NO cache headers on the gated canary: Cache-Control public lets the CF edge
+	# store an authed response and serve it unauthenticated (confirmed 07-10-2026,
+	# cf-cache-status HIT on a gated asset). prod keeps its cache rules; the
+	# canary trades them for a tight gate. deliberate divergence.
+	header Cache-Control "private, no-store"
+	header /feed.xml Content-Type "application/rss+xml; charset=utf-8"
+	handle_path /api/anvil/* {
+		reverse_proxy 127.0.0.1:8090
+	}
+	redir /rss /feed.xml
+	redir /feed /feed.xml
+	redir /til /writing/ permanent
+	redir /til/ /writing/ permanent
+	redir /til/index.html /writing/ permanent
+	redir /notes /writing/ permanent
+	redir /notes/ /writing/ permanent
+	redir /notes/index.html /writing/ permanent
+	# terminal clients get the plain-text resume at /
+	@cli {
+		header_regexp User-Agent (?i)(curl|wget|httpie|powershell)
+		path /
+	}
+	handle @cli {
+		rewrite * /resume.txt
+		header Cache-Control "no-store"
+		header Content-Type "text/plain; charset=utf-8"
+		# GUARD: never add a cloudflare cache rule for "/" - this branch serves
+		# two bodies by UA under one cache key. "/" has no extension so CF won't
+		# edge-cache it by default; any future CF cache rule MUST exclude "/".
+	}
+	# never serve repo internals (rsync excludes these; belt and braces)
+	respond /.git* 404
+	respond /_src* 404
+	respond /tools* 404
+}
+
+# staging for hartforge.dev - not for indexing. same posture as canary.com.
+canary.hartforge.dev {
+	import protected
+	# staging gate - creds in ~/bin/.env on the mini (CANARY_USER/CANARY_PASS)
+	basic_auth {
+		patrick REDACTED_BCRYPT_HASH
+	}
+	root * /opt/landing-canary
+	file_server
+	header X-Robots-Tag "noindex, nofollow"
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+	header Content-Security-Policy "default-src 'none'; script-src 'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE=' 'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8=' 'sha256-8ZTGMbNDQLk69fEL1jSo0Ak3FNIWuslf8bQDwfTe6FU=' https://static.cloudflareinsights.com; connect-src https://status.hartforge.dev https://cloudflareinsights.com; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+	# no cache headers on the gated canary - see canary.hartforge.com comment
+	header Cache-Control "private, no-store"
+	# never serve repo internals (rsync excludes these; belt and braces)
+	respond /.git* 404
+	respond /_src* 404
+	respond /tools* 404
 }
 
 harthauling.com, www.harthauling.com {

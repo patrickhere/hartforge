@@ -1,0 +1,23 @@
+# csp hash registry - the single source for every script-src sha256 in
+# caddy-Caddyfile. one entry per EXECUTABLE inline script. audited 2026-07-10.
+#
+# rules:
+# - any inline script edit = recompute (bytes between <script> and </script>,
+#   boundary newlines included):
+#     openssl dgst -sha256 -binary | openssl base64
+# - arm the caddyfile hash BEFORE deploying the page (unused hash is inert),
+#   add-before-remove during transitions. canary vhost first, then prod.
+# - <script type="application/ld+json"> is a CSP data block: never executed,
+#   never hashed, NOT in this registry (a hash for it is an orphan - one was
+#   retired 2026-07-10).
+# - the cloudflare beacon is authorized by host (static.cloudflareinsights.com),
+#   not hash.
+
+hartforge.com (+ canary.hartforge.com):
+  index.html  'sha256-LSHsRXjiZyiBkdt2qyKszRjEKyYT9FzPdfePihtCxSU='   # typewriter + status dot + console egg + anvil counter + beforeprint IIFE
+  404.html    'sha256-3h41NO8lfCZph2TIU2wbp3SuA7R6kvoc3h16nrJArW8='   # terminal-style path echo IIFE
+
+hartforge.dev (+ canary.hartforge.dev):
+  index.html       'sha256-KLm9xgZ6TPE0qMAyD9nCUGZm3VbyiPfr/Maz90uRLDE='   # status dots + pokemon buddy IIFE
+  404.html         'sha256-GLHqfO8zdQovXpKw3NnL8KwW3fMFmsJT7ea6a8tHxJ8='   # terminal-style path echo IIFE
+  shell/index.html 'sha256-8ZTGMbNDQLk69fEL1jSo0Ak3FNIWuslf8bQDwfTe6FU='   # toy terminal (added 07-10-2026)

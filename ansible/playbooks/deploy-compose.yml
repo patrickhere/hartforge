@@ -1,7 +1,7 @@
 ---
 # Deploy Docker Compose stacks from homelab-compose repo.
 # Usage: ansible-playbook playbooks/deploy-compose.yml --limit <hostname>
-#   -e compose_repo=~/Documents/homelab-compose   (default)
+#   -e compose_repo=~/Documents/projects/homelab/homelab-compose   (default)
 #   -e service_dir=monitoring                       Override compose subdir
 #
 # Requires: compose_path defined in host_vars (target deploy path on host)
@@ -12,7 +12,7 @@
   become: true
   gather_facts: false
   vars:
-    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/homelab-compose"
+    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/projects/homelab/homelab-compose"
     service_dir: ""
 
   tasks:

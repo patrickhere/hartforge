@@ -1,0 +1,66 @@
+{
+  "uid": "hartforge-wireguard",
+  "title": "WireGuard",
+  "tags": ["hartforge", "wireguard"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "s2s handshake age (vps end)",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "time() - max(wireguard_latest_handshake_seconds{site=\"vps\"})", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null }, { "color": "yellow", "value": 180 }, { "color": "red", "value": 300 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 2, "type": "stat", "title": "s2s handshake age (home end)",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "time() - max(wireguard_latest_handshake_seconds{site=\"home\"})", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null }, { "color": "yellow", "value": 180 }, { "color": "red", "value": 300 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 3, "type": "stat", "title": "peers with recent handshake (5m)",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "count((time() - wireguard_latest_handshake_seconds) < 300) or vector(0)", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] } }, "overrides": [] }
+    },
+    {
+      "id": 4, "type": "stat", "title": "s2s traffic today (vps rx)",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(wireguard_received_bytes_total{site=\"vps\"}[24h]))", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [ { "color": "purple", "value": null } ] } }, "overrides": [] }
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "throughput - received (by peer)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "rate(wireguard_received_bytes_total[5m])", "legendFormat": "{{site}} {{interface}} {{allowed_ips}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "Bps" }, "overrides": [] }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "throughput - sent (by peer)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "rate(wireguard_sent_bytes_total[5m])", "legendFormat": "{{site}} {{interface}} {{allowed_ips}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "Bps" }, "overrides": [] }
+    },
+    {
+      "id": 7, "type": "table", "title": "peers",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "time() - wireguard_latest_handshake_seconds", "format": "table", "instant": true, "refId": "A" }],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "job": true, "instance": true },
+          "renameByName": { "Value": "handshake age (s)", "allowed_ips": "allowed ips", "public_key": "public key" } } }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    }
+  ]
+}

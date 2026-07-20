@@ -1,6 +1,6 @@
 services:
   homepage:
-    image: ghcr.io/gethomepage/homepage:latest
+    image: ghcr.io/gethomepage/homepage:v1.13.2
     container_name: homepage
     ports:
       - 3000:3000
@@ -12,3 +12,14 @@ services:
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=home.hartforge.dev,10.1.0.54,localhost
     restart: unless-stopped
+
+  beszel-agent:
+    image: henrygd/beszel-agent:0.18.7
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PORT: '45876'
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATsQ2RzWzPcUH8caRipiZe7lEnHf+/cNHeBiq3iQiUy'

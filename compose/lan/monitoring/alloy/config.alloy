@@ -1,0 +1,24 @@
+// ship this lxc's own logs to the local loki
+loki.source.file "varlog" {
+  targets = [
+    {__path__ = "/var/log/syslog", job = "syslog", host = "monitoring"},
+    {__path__ = "/var/log/auth.log", job = "auth", host = "monitoring"},
+  ]
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.local.targets
+  forward_to = [loki.write.local.receiver]
+}
+
+discovery.docker "local" {
+  host = "unix:///var/run/docker.sock"
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

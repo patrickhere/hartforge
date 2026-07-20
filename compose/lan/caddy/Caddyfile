@@ -28,9 +28,10 @@
 }
 
 (tinyauth) {
-	forward_auth http://100.70.8.13:3080 {
+	forward_auth http://172.16.98.2:3080 {
 		uri /api/auth/caddy
 		copy_headers Remote-User Remote-Name Remote-Email Remote-Groups
+		trusted_proxies private_ranges
 	}
 }
 
@@ -38,12 +39,31 @@
 	tls {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 		resolvers 1.1.1.1
-		propagation_timeout 35m
+		propagation_delay 30s
+		propagation_timeout -1
 	}
 
 	log
 	import security_headers
 	crowdsec
+
+	# --- Auth ---
+
+	@pocketid host pocket-id.hartforge.dev
+	handle @pocketid {
+		reverse_proxy http://172.16.98.2:1411
+	}
+
+	@auth host auth.hartforge.dev
+	handle @auth {
+		reverse_proxy http://172.16.98.2:3080
+	}
+
+	@wireguard host wireguard.hartforge.dev
+	handle @wireguard {
+		import tinyauth
+		reverse_proxy http://10.1.0.58:51821
+	}
 
 	# --- Media ---
 
@@ -133,33 +153,51 @@
 
 	@sabnzbd host sabnzbd.hartforge.dev
 	handle @sabnzbd {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:8080
-	}
+		route {
+			@sabapi path /api /api/*
+			reverse_proxy @sabapi http://10.1.0.52:8080
 
-	@qbit host qbit.hartforge.dev
-	handle @qbit {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:8081
+			import tinyauth
+			reverse_proxy http://10.1.0.52:8080
+		}
 	}
 
 	@profilarr host profilarr.hartforge.dev
 	handle @profilarr {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:6868
+		route {
+			@profilarrapi path /api /api/*
+			reverse_proxy @profilarrapi http://10.1.0.52:6868
+
+			import tinyauth
+			reverse_proxy http://10.1.0.52:6868
+		}
 	}
 
 	@posterizarr host poster.hartforge.dev
 	handle @posterizarr {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:8400
+		route {
+			@posterizarrapi path /api /api/*
+			reverse_proxy @posterizarrapi http://10.1.0.52:8400
+
+			import tinyauth
+			reverse_proxy http://10.1.0.52:8400
+		}
 	}
 
 	# --- Infrastructure ---
 
-	@proxmox host proxmox.hartforge.dev
-	handle @proxmox {
+	@forge host forge.hartforge.dev
+	handle @forge {
 		reverse_proxy https://10.1.0.50:8006 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	@annex host annex.hartforge.dev
+	handle @annex {
+		reverse_proxy https://10.1.0.49:8006 {
 			transport http {
 				tls_insecure_skip_verify
 			}
@@ -176,25 +214,19 @@
 
 	@grafana host grafana.hartforge.dev
 	handle @grafana {
-		route {
-			@api path /api/*
-			reverse_proxy @api http://10.1.0.57:3000
-
-			import tinyauth
-			reverse_proxy http://10.1.0.57:3000
-		}
+		# native oidc via pocket id, no tinyauth (cwa precedent)
+		reverse_proxy http://10.1.0.57:3000
 	}
 
 	@prometheus host prometheus.hartforge.dev
 	handle @prometheus {
-		import tinyauth
-		reverse_proxy http://10.1.0.57:9090
-	}
+		route {
+			@prometheusapi path /api /api/*
+			reverse_proxy @prometheusapi http://10.1.0.57:9090
 
-	@logs host logs.hartforge.dev
-	handle @logs {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:9999
+			import tinyauth
+			reverse_proxy http://10.1.0.57:9090
+		}
 	}
 
 	# --- Apps ---
@@ -243,8 +275,13 @@
 
 	@tdarr host tdarr.hartforge.dev
 	handle @tdarr {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:8265
+		route {
+			@tdarrapi path /api /api/*
+			reverse_proxy @tdarrapi http://10.1.0.52:8265
+
+			import tinyauth
+			reverse_proxy http://10.1.0.52:8265
+		}
 	}
 
 	@wizarr host wizarr.hartforge.dev
@@ -254,13 +291,27 @@
 
 	@tracearr host tracearr.hartforge.dev
 	handle @tracearr {
-		import tinyauth
-		reverse_proxy http://10.1.0.52:3001
+		route {
+			@tracearrapi path /api /api/*
+			reverse_proxy @tracearrapi http://10.1.0.52:3001
+
+			import tinyauth
+			reverse_proxy http://10.1.0.52:3001
+		}
 	}
 
 	@adguard host adguard.hartforge.dev
 	handle @adguard {
 		reverse_proxy http://10.1.0.10:80
+	}
+
+	@unifi host unifi.hartforge.dev
+	handle @unifi {
+		reverse_proxy https://10.1.0.1 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
 	}
 
 	@phototools host photo-tools.hartforge.dev
@@ -271,8 +322,18 @@
 
 	@semaphore host semaphore.hartforge.dev
 	handle @semaphore {
-		import tinyauth
-		reverse_proxy http://10.1.0.81:3100
+		route {
+			@semaphoreapi path /api /api/*
+			reverse_proxy @semaphoreapi http://10.1.0.81:3100
+
+			import tinyauth
+			reverse_proxy http://10.1.0.81:3100
+		}
+	}
+
+	@beszel host beszel.hartforge.dev
+	handle @beszel {
+		reverse_proxy http://10.1.0.57:8090
 	}
 
 	# Fallback for unmatched subdomains

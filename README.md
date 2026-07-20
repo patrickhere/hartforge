@@ -13,7 +13,8 @@ else is the real config that runs the lab.
   DNS, monitoring, reverse proxy)
 - **IONOS VPS** as the public edge - identity, git, notifications, and anything
   that should survive the house losing power
-- **tailscale** stitching the two together; nothing internal is port-forwarded
+- **wireguard** stitching the two together - a plain wg site-to-site tunnel,
+  managed with WGDashboard, home side dials out
 
 ## layout
 

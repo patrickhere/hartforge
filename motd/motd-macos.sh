@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # HartForge MOTD (macOS) — Catppuccin Mocha, with a small Pokémon buddy.
 # Sprite sits left of the stat panel when it fits $COLUMNS, else stacks below.
-# Shared across all Mac hosts; the subtitle nickname is resolved by Tailscale IP below.
+# Shared across all Mac hosts; the subtitle nickname is resolved by host IP below.
 
 # Invoked from .zprofile before .zshrc sets PATH — make sure our tools resolve.
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
@@ -41,13 +41,13 @@ OSV="macOS $(sw_vers -productVersion)"
 MODEL="$(sysctl -n machdep.cpu.brand_string 2>/dev/null)"
 DATE="$(date '+%A, %B %-d · %H:%M')"
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 'offline')"
-if command -v tailscale &>/dev/null; then TS="$(tailscale ip -4 2>/dev/null | head -1)"; fi
-
-# HartForge blacksmith naming scheme, keyed off Tailscale IP (stable per host)
-case "$TS" in
-  100.112.186.36) NICK="the anvil" ;;      # Mac Mini — always-on homelab
-  100.90.89.126)  NICK="the workbench" ;;  # MacBook — portable dev machine
-  *)              NICK="$HNAME" ;;
+# HartForge blacksmith naming scheme, keyed off LAN IP / hostname (no tailscale)
+case "$IP" in
+  10.1.0.81) NICK="the anvil" ;;           # Mac Mini — always-on homelab
+  *) case "$(hostname -s | tr "[:upper:]" "[:lower:]")" in
+       *mbp*|*macbook*) NICK="the workbench" ;;  # MacBook — portable dev machine
+       *)               NICK="$HNAME" ;;
+     esac ;;
 esac
 
 # uptime

@@ -1,6 +1,6 @@
 services:
   pocket-id:
-    image: ghcr.io/pocket-id/pocket-id:v2
+    image: ghcr.io/pocket-id/pocket-id:v2.11.0
     container_name: pocket-id
     restart: unless-stopped
     env_file: .env
@@ -11,7 +11,7 @@ services:
       - autoheal=true
     ports:
       - "127.0.0.1:1411:1411"
-      - "100.70.8.13:1411:1411"
+      - "172.16.98.2:1411:1411"
     volumes:
       - ./data:/app/data
     healthcheck:

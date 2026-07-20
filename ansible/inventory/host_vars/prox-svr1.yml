@@ -5,7 +5,8 @@ proxmox_node: prox-svr1
 proxmox_api_host: "10.1.0.50"
 proxmox_api_user: "root@pam"
 proxmox_api_token_id: "ansible"
-# proxmox_api_token_secret is in vars/secrets.yml (vault-encrypted)
+proxmox_api_token_secret: "{{ prox_svr1_api_token_secret }}"
+# prox_svr1_api_token_secret is in vars/secrets.yml (vault-encrypted)
 
 backup_files:
   - { src: "/etc/pve/storage.cfg", dest: "proxmox/storage.cfg" }
@@ -20,7 +21,7 @@ lxc_definitions:
     cores: 2
     memory: 1024
     disk: "local-lvm:8"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     tags: "proxy"
     onboot: true
     docker: false
@@ -33,7 +34,7 @@ lxc_definitions:
     cores: 1
     memory: 1024
     disk: "local-lvm:10"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     tags: "management,ssh,terminal"
     onboot: true
     docker: true
@@ -45,8 +46,8 @@ lxc_definitions:
     gw: "10.1.0.1"
     cores: 1
     memory: 512
-    disk: "local-lvm:8"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    disk: "data2:8"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: true
     alloy: false
@@ -57,8 +58,8 @@ lxc_definitions:
     gw: "10.1.0.1"
     cores: 1
     memory: 512
-    disk: "local-lvm:4"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    disk: "data2:4"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: true
     alloy: false
@@ -69,8 +70,8 @@ lxc_definitions:
     gw: "10.1.0.1"
     cores: 1
     memory: 512
-    disk: "local-lvm:8"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    disk: "data2:8"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: true
     alloy: false
@@ -81,8 +82,8 @@ lxc_definitions:
     gw: "10.1.0.1"
     cores: 2
     memory: 2048
-    disk: "local-lvm:40"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    disk: "data2:40"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: true
     alloy: true
@@ -94,7 +95,7 @@ lxc_definitions:
     cores: 2
     memory: 2048
     disk: "local-lvm:500"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: false
     alloy: false
@@ -106,7 +107,7 @@ lxc_definitions:
     cores: 1
     memory: 512
     disk: "local-lvm:4"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: false
     alloy: false
@@ -117,8 +118,8 @@ lxc_definitions:
     gw: "10.1.0.1"
     cores: 4
     memory: 8192
-    disk: "local-lvm:20"
-    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    disk: "data2:40"
+    template: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
     onboot: true
     docker: true
     alloy: false

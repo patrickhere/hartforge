@@ -1,0 +1,16 @@
+---
+svc_name: PVE
+svc_check: "systemctl is-active pveproxy"
+proxmox_node: prox-svr2
+proxmox_api_host: "10.1.0.49"
+proxmox_api_user: "root@pam"
+proxmox_api_token_id: "ansible"
+proxmox_api_token_secret: "{{ prox_svr2_api_token_secret }}"
+# prox_svr2_api_token_secret is in vars/secrets.yml (vault-encrypted)
+
+backup_files:
+  - { src: "/etc/pve/storage.cfg", dest: "proxmox/storage.cfg" }
+  - { src: "/etc/pve/user.cfg", dest: "proxmox/user.cfg" }
+
+# no LXC definitions yet - clean slate as of 2026-07-16, add here once a project is decided
+lxc_definitions: []

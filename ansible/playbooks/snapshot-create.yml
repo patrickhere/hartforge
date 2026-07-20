@@ -1,15 +1,16 @@
 ---
 # Create Proxmox snapshots before maintenance.
-# Usage: ansible-playbook playbooks/snapshot-create.yml
+# Usage: ansible-playbook playbooks/snapshot-create.yml --limit prox-svr1
 #   -e target=caddy          Snapshot a single LXC
 #   -e target=all            Snapshot all LXCs
 #   -e snap_prefix=pre-update  Snapshot name prefix (default: pre-update)
 #   -e retention=3           Keep N most recent snapshots (default: 3)
 #
 # Requires: Proxmox API credentials in vars/secrets.yml (vault-encrypted)
+# Always pass --limit to a single node - without it this runs against every host in the proxmox group
 
 - name: Create Proxmox snapshots
-  hosts: prox-svr1
+  hosts: proxmox
   gather_facts: false
   vars:
     target: "all"

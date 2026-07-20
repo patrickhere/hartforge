@@ -10,9 +10,9 @@
     - Cloudflare:
         - icon: cloudflare
           href: https://dash.cloudflare.com
-    - Tailscale:
-        - icon: tailscale
-          href: https://login.tailscale.com/admin/machines
+    - WGDashboard:
+        - icon: wireguard
+          href: https://wireguard.hartforge.dev
     - Ionos:
         - icon: mdi-server
           href: https://my.ionos.com

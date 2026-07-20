@@ -1,2 +1,5 @@
 ---
-motd_repo_url: "https://git.hartforge.dev/patrickhere/homelab-scripts/raw/branch/main/motd/motd-linux.sh"
+# homelab-scripts is private - the script is fetched on the controller via
+# forgejo-cli (authed) and copied to targets, not downloaded from the raw URL
+motd_api_path: "/repos/patrickhere/homelab-scripts/contents/motd%2Fmotd-linux.sh"
+motd_fetch_dest: "/tmp/hartforge-motd-linux.sh"

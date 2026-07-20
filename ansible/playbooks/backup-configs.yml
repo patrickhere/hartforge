@@ -6,12 +6,14 @@
   vars:
     backup_dir: "{{ playbook_dir }}/../backups/{{ lookup('pipe', 'date +%Y-%m-%d') }}"
     grafana_url: "http://10.1.0.57:3000"
-    grafana_user: "admin"
+    grafana_user: "patrick"
     # SSH errors that indicate host is down (not data issues)
     ssh_errors:
       - "Connection refused"
       - "No route to host"
       - "Connection timed out"
+      - "Operation timed out"
+      - "Host is down"
       - "Could not resolve hostname"
       - "Network is unreachable"
   vars_files:
@@ -24,7 +26,7 @@
         state: directory
       loop:
         - caddy
-        - yams
+        - crucible
         - uptime-kuma
         - homepage/config
         - forgejo
@@ -32,10 +34,11 @@
         - grafana-dashboards
         - vps
         - immich
+        - wireguard
 
     # --- caddy / NPM (10.1.0.51) ---
     - name: Backup caddy configs
-      shell: "scp root@10.1.0.51:{{ item.src }} {{ backup_dir }}/caddy/{{ item.dest }}"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.51:{{ item.src }} {{ backup_dir }}/caddy/{{ item.dest }}"
       loop:
         - { src: "/etc/caddy/Caddyfile", dest: "Caddyfile" }
         - { src: "/etc/caddy/environment", dest: "environment" }
@@ -45,23 +48,23 @@
         selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
         rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
 
-    # --- yams (10.1.0.52) ---
-    - name: Backup yams configs
-      shell: "scp root@10.1.0.52:{{ item.src }} {{ backup_dir }}/yams/{{ item.dest }}"
+    # --- crucible (10.1.0.52) ---
+    - name: Backup crucible configs
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.52:{{ item.src }} {{ backup_dir }}/crucible/{{ item.dest }}"
       loop:
-        - { src: "/opt/yams/docker-compose.custom.yaml", dest: "docker-compose.custom.yaml" }
-        - { src: "/opt/yams/.env", dest: ".env" }
+        - { src: "/opt/crucible/docker-compose.yml", dest: "docker-compose.yml" }
+        - { src: "/opt/crucible/.env", dest: ".env" }
         - { src: "/opt/yams/config/recyclarr/recyclarr.yml", dest: "recyclarr.yml" }
         - { src: "/opt/yams/config/alloy/config.alloy", dest: "alloy-config.alloy" }
-      register: yams_result
+      register: crucible_result
       failed_when: >
-        yams_result.results | default([yams_result]) |
+        crucible_result.results | default([crucible_result]) |
         selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
         rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
 
     # --- uptime-kuma (10.1.0.53) ---
     - name: Backup uptime-kuma compose
-      shell: "scp root@10.1.0.53:/opt/uptime-kuma/docker-compose.yaml {{ backup_dir }}/uptime-kuma/docker-compose.yaml"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.53:/opt/uptime-kuma/docker-compose.yaml {{ backup_dir }}/uptime-kuma/docker-compose.yaml"
       register: uptime_kuma_result
       failed_when: >
         uptime_kuma_result.rc != 0
@@ -69,7 +72,7 @@
 
     # --- homepage (10.1.0.54) ---
     - name: Backup homepage configs
-      shell: "scp root@10.1.0.54:/opt/homepage/config/{{ item }} {{ backup_dir }}/homepage/config/{{ item }}"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.54:/opt/homepage/config/{{ item }} {{ backup_dir }}/homepage/config/{{ item }}"
       loop:
         - services.yaml
         - settings.yaml
@@ -83,7 +86,7 @@
         rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
 
     - name: Backup homepage compose
-      shell: "scp root@10.1.0.54:/opt/homepage/docker-compose.yaml {{ backup_dir }}/homepage/docker-compose.yaml"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.54:/opt/homepage/docker-compose.yaml {{ backup_dir }}/homepage/docker-compose.yaml"
       register: homepage_compose_result
       failed_when: >
         homepage_compose_result.rc != 0
@@ -91,7 +94,7 @@
 
     # --- forgejo (10.1.0.56) ---
     - name: Backup forgejo compose
-      shell: "scp root@10.1.0.56:/opt/forgejo/docker-compose.yaml {{ backup_dir }}/forgejo/docker-compose.yaml"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.56:/opt/forgejo/docker-compose.yaml {{ backup_dir }}/forgejo/docker-compose.yaml"
       register: forgejo_compose_result
       failed_when: >
         forgejo_compose_result.rc != 0
@@ -99,12 +102,12 @@
 
     - name: Run forgejo dump
       shell: >
-        ssh root@10.1.0.56 'cd /opt/forgejo &&
+        ssh -o ConnectTimeout=10 root@10.1.0.56 'cd /opt/forgejo &&
         docker compose exec -T -u git forgejo forgejo dump -c /data/gitea/conf/app.ini -f /tmp/forgejo-dump.zip &&
         docker cp forgejo:/tmp/forgejo-dump.zip /tmp/forgejo-dump.zip &&
         docker compose exec -T forgejo rm -f /tmp/forgejo-dump.zip' &&
-        scp root@10.1.0.56:/tmp/forgejo-dump.zip {{ backup_dir }}/forgejo/forgejo-dump.zip &&
-        ssh root@10.1.0.56 'rm -f /tmp/forgejo-dump.zip'
+        scp -o ConnectTimeout=10 root@10.1.0.56:/tmp/forgejo-dump.zip {{ backup_dir }}/forgejo/forgejo-dump.zip &&
+        ssh -o ConnectTimeout=10 root@10.1.0.56 'rm -f /tmp/forgejo-dump.zip'
       register: forgejo_dump_result
       ignore_errors: true
 
@@ -114,26 +117,67 @@
       when: forgejo_dump_result is failed
 
     # --- monitoring (10.1.0.57) ---
-    - name: Backup monitoring configs
-      shell: "scp root@10.1.0.57:{{ item.src }} {{ backup_dir }}/monitoring/{{ item.dest }}"
-      loop:
-        - { src: "/opt/monitoring/docker-compose.yaml", dest: "docker-compose.yaml" }
-        - { src: "/opt/monitoring/prometheus.yml", dest: "prometheus.yml" }
-        - { src: "/opt/monitoring/loki-config.yml", dest: "loki-config.yml" }
-        - { src: "/opt/monitoring/alloy-config.alloy", dest: "alloy-config.alloy" }
+    # whole-dir tar, not per-file scp: the stack layout changes and per-file
+    # lists rot silently (this exact task backed up nothing for months after
+    # the 07-12 storage incident because the listed files no longer existed)
+    - name: Create monitoring config archive
+      shell: >
+        ssh -o ConnectTimeout=10 root@10.1.0.57
+        'tar czf /tmp/monitoring-configs.tar.gz -C /opt monitoring 2>/dev/null'
+      register: monitoring_archive_result
+      failed_when: >
+        monitoring_archive_result.rc != 0
+        and not (monitoring_archive_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    - name: Fetch monitoring config archive
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.57:/tmp/monitoring-configs.tar.gz {{ backup_dir }}/monitoring/monitoring-configs.tar.gz"
       register: monitoring_result
       failed_when: >
-        monitoring_result.results | default([monitoring_result]) |
-        selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) |
-        rejectattr('stderr', 'search', ssh_errors | join('|')) | list | length > 0
+        monitoring_result.rc != 0
+        and not (monitoring_result.stderr | default('') is search(ssh_errors | join('|')))
 
-    # --- VPS (100.70.8.13 via Tailscale) ---
+    - name: Read grafana admin password from the live stack
+      shell: ssh -o ConnectTimeout=10 root@10.1.0.57 "grep GF_SECURITY_ADMIN_PASSWORD /opt/monitoring/.env | cut -d= -f2"
+      register: grafana_pass_live
+      no_log: true
+      ignore_errors: true
+
+    - name: Use live grafana password
+      set_fact:
+        grafana_pass: "{{ grafana_pass_live.stdout }}"
+      no_log: true
+      when: grafana_pass_live.rc | default(1) == 0 and grafana_pass_live.stdout | length > 0
+
+    # --- wireguard lxc (10.1.0.58) ---
+    # /etc/wireguard holds ALL tunnel keys (wg0 roadwarrior peers + wg1 s2s)
+    # since the 07-19 wg-easy -> wgdashboard migration. whole-dir tar like
+    # monitoring: layout rot must not silently empty this backup.
+    - name: Create wireguard config archive
+      shell: >
+        ssh -o ConnectTimeout=10 root@10.1.0.58
+        'tar czf /tmp/wireguard-configs.tar.gz -C / etc/wireguard
+        opt/WGDashboard/src/wg-dashboard.ini
+        opt/WGDashboard/src/wg-dashboard-oidc-providers.json
+        opt/WGDashboard/src/db 2>/dev/null'
+      register: wireguard_archive_result
+      failed_when: >
+        wireguard_archive_result.rc != 0
+        and not (wireguard_archive_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    - name: Fetch wireguard config archive
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.58:/tmp/wireguard-configs.tar.gz {{ backup_dir }}/wireguard/wireguard-configs.tar.gz"
+      register: wireguard_result
+      failed_when: >
+        wireguard_result.rc != 0
+        and not (wireguard_result.stderr | default('') is search(ssh_errors | join('|')))
+
+    # --- VPS (172.16.98.2 via wg-s2s) ---
     - name: Create VPS config archive
       shell: >
-        ssh root@100.70.8.13
+        ssh -o ConnectTimeout=10 root@172.16.98.2
         'tar czf /tmp/vps-configs-backup.tar.gz
-        /opt/authentik/docker-compose.yml /opt/authentik/.env
-        /opt/uptime-kuma/ /opt/forgejo/ /opt/ntfy/ /opt/alloy/
+        /etc/caddy/ /opt/vps-compose/ /opt/uptime-kuma/
+        /opt/forgejo/ /opt/ntfy/ /opt/pocket-id/ /opt/tinyauth/
         2>/dev/null'
       register: vps_archive_result
       failed_when: >
@@ -141,7 +185,7 @@
         and not (vps_archive_result.stderr | default('') is search(ssh_errors | join('|')))
 
     - name: Fetch VPS config archive
-      shell: "scp root@100.70.8.13:/tmp/vps-configs-backup.tar.gz {{ backup_dir }}/vps/vps-configs.tar.gz"
+      shell: "scp -o ConnectTimeout=10 root@172.16.98.2:/tmp/vps-configs-backup.tar.gz {{ backup_dir }}/vps/vps-configs.tar.gz"
       register: vps_fetch_result
       failed_when: >
         vps_fetch_result.rc != 0
@@ -149,7 +193,7 @@
 
     # --- immich (10.1.0.59) ---
     - name: Backup immich configs
-      shell: "scp root@10.1.0.59:{{ item.src }} {{ backup_dir }}/immich/{{ item.dest }}"
+      shell: "scp -o ConnectTimeout=10 root@10.1.0.59:{{ item.src }} {{ backup_dir }}/immich/{{ item.dest }}"
       loop:
         - { src: "/opt/immich/.env", dest: ".env" }
         - { src: "/opt/immich/docker-compose.yml", dest: "docker-compose.yml" }
@@ -162,8 +206,8 @@
 
     - name: Backup immich database dump
       shell: >
-        ssh root@10.1.0.59 '/opt/immich/backup-db.sh' &&
-        scp root@10.1.0.59:/opt/immich/backups/immich-db-$(date +%Y-%m-%d).sql.gz
+        ssh -o ConnectTimeout=10 root@10.1.0.59 '/opt/immich/backup-db.sh' &&
+        scp -o ConnectTimeout=10 root@10.1.0.59:/opt/immich/backups/immich-db-$(date +%Y-%m-%d).sql.gz
         {{ backup_dir }}/immich/immich-db-latest.sql.gz
       register: immich_db_result
       ignore_errors: true
@@ -183,8 +227,9 @@
         - { path: "caddy/Caddyfile", name: "Caddy config" }
         - { path: "forgejo/forgejo-dump.zip", name: "Forgejo dump" }
         - { path: "vps/vps-configs.tar.gz", name: "VPS archive" }
-        - { path: "monitoring/prometheus.yml", name: "Prometheus config" }
+        - { path: "monitoring/monitoring-configs.tar.gz", name: "Monitoring archive" }
         - { path: "immich/.env", name: "Immich config" }
+        - { path: "wireguard/wireguard-configs.tar.gz", name: "WireGuard archive" }
       loop_control:
         label: "{{ item.name }}"
 
@@ -198,25 +243,42 @@
       failed_when: not item.stat.exists
 
     # --- Grafana dashboard export ---
+    # curl not uri module: macos local-network privacy blocks python urllib
+    # to lan hosts (errno 65) while curl is allowed
     - name: Get all Grafana dashboards
-      uri:
-        url: "{{ grafana_url }}/api/search?type=dash-db"
-        user: "{{ grafana_user }}"
-        password: "{{ grafana_pass }}"
-        force_basic_auth: true
-      register: dashboards
+      shell: "curl -sf -u '{{ grafana_user }}:{{ grafana_pass }}' '{{ grafana_url }}/api/search?type=dash-db'"
+      register: dashboards_raw
+      no_log: true
 
     - name: Export each Grafana dashboard
-      uri:
-        url: "{{ grafana_url }}/api/dashboards/uid/{{ item.uid }}"
-        user: "{{ grafana_user }}"
-        password: "{{ grafana_pass }}"
-        force_basic_auth: true
-        dest: "{{ backup_dir }}/grafana-dashboards/{{ item.uid }}.json"
-      loop: "{{ dashboards.json }}"
+      shell: "curl -sf -u '{{ grafana_user }}:{{ grafana_pass }}' '{{ grafana_url }}/api/dashboards/uid/{{ item.uid }}' -o '{{ backup_dir }}/grafana-dashboards/{{ item.uid }}.json'"
+      loop: "{{ dashboards_raw.stdout | from_json }}"
       loop_control:
         label: "{{ item.title }}"
+      no_log: true
 
     - name: Print backup summary
       debug:
         msg: "Backup completed to {{ backup_dir }}"
+
+    # --- verify the backup actually contains data ---
+    # empty-backup failures have bitten twice (immich db, monitoring configs):
+    # jobs ran green while archiving nothing. fail loudly instead.
+    - name: Check each backup dir is non-empty
+      shell: "find {{ backup_dir }}/{{ item }} -type f -size +0c | head -1"
+      loop:
+        - caddy
+        - crucible
+        - uptime-kuma
+        - homepage/config
+        - forgejo
+        - monitoring
+        - grafana-dashboards
+        - vps
+      register: nonempty_check
+      changed_when: false
+
+    - name: Fail on empty backup dirs
+      fail:
+        msg: "EMPTY BACKUP DIRS (job ran but captured nothing): {{ nonempty_check.results | selectattr('stdout', 'eq', '') | map(attribute='item') | list | join(', ') }}"
+      when: nonempty_check.results | selectattr('stdout', 'eq', '') | list | length > 0

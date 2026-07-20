@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # wireguard s2s - vps end (exporter reads wg-s2s via wg show)
+  - job_name: wireguard-vps
+    static_configs:
+      - targets: ['172.16.98.2:9586']
+        labels:
+          site: vps
+
+  # wireguard home end - wg0 roadwarrior + wg1 s2s on the wg lxc host
+  # (wg-easy retired 07-19-2026, exporter now covers both interfaces)
+  - job_name: wireguard-home
+    static_configs:
+      - targets: ['10.1.0.58:9586']
+        labels:
+          site: home
+
+  - job_name: node-monitoring
+    static_configs:
+      - targets: ['10.1.0.57:9100']
+        labels:
+          host: monitoring
+
+  - job_name: node-prox
+    static_configs:
+      - targets: ['10.1.0.50:9100']
+        labels:
+          host: prox-svr1

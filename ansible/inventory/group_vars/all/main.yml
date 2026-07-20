@@ -5,7 +5,6 @@ timezone: "America/Chicago"
 loki_url: "http://10.1.0.57:3100/loki/api/v1/push"
 grafana_url: "http://10.1.0.57:3000"
 prometheus_config: /opt/monitoring/prometheus.yml
-motd_repo_url: "https://git.hartforge.dev/patrickhere/homelab-scripts/raw/branch/main/motd/motd-linux.sh"
 
 ssh_authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMW/LPEPctc8sALGAE7yeHsPfzAFthzpwmhxoX3gvOSU admin@mac-mini"
@@ -24,6 +23,7 @@ base_packages:
   - lsb-release
   - apt-transport-https
   - sudo
+  - rsync
   - cron
 
 docker_log_config:

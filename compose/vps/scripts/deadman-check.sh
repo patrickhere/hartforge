@@ -1,9 +1,9 @@
 #!/bin/bash
 # Dead man's switch for Mac Mini
-# Runs on VPS, checks Mac Mini via Tailscale
+# Runs on VPS, checks Mac Mini via the wg s2s tunnel
 # Alerts via ntfy if both ping and Paimon webhook fail
 
-MAC_MINI_TS="100.112.186.36"
+MAC_MINI_TS="10.1.0.81"
 PAIMON_HEALTH="http://${MAC_MINI_TS}:7890/health"
 NTFY_URL="https://ntfy.hartforge.dev/homelab-alerts"
 STATE_FILE="/tmp/deadman-mac-mini.state"
@@ -11,27 +11,30 @@ STATE_FILE="/tmp/deadman-mac-mini.state"
 # Load ntfy credentials
 source /opt/scripts/.env 2>/dev/null
 
-# Tailscale self-heal: if tailscaled is wedged, everything below false-alarms
-# and SSH to this box is dead. 3 consecutive failures (30 min) -> restart it.
-TS_FAIL_FILE="/tmp/deadman-tailscale.fails"
-if ! tailscale status > /dev/null 2>&1; then
-    TS_FAILS=$(( $(cat "$TS_FAIL_FILE" 2>/dev/null || echo 0) + 1 ))
-    echo "$TS_FAILS" > "$TS_FAIL_FILE"
-    if [[ $TS_FAILS -eq 3 ]]; then
-        systemctl restart tailscaled
-        sleep 10
-        if tailscale status > /dev/null 2>&1; then TS_RESULT="recovered after restart"; else TS_RESULT="still down after restart - SSH to VPS may be dead, use IONOS VNC console"; fi
+# wg-s2s self-heal: if the tunnel is wedged, everything below false-alarms.
+# 3 consecutive stale handshakes (30 min) -> restart wg-quick@wg-s2s.
+WG_FAIL_FILE="/tmp/deadman-wgs2s.fails"
+HS=$(wg show wg-s2s latest-handshakes 2>/dev/null | awk "{print \$2}")
+NOW=$(date +%s)
+if [[ -z "$HS" || $(( NOW - HS )) -gt 300 ]]; then
+    WG_FAILS=$(( $(cat "$WG_FAIL_FILE" 2>/dev/null || echo 0) + 1 ))
+    echo "$WG_FAILS" > "$WG_FAIL_FILE"
+    if [[ $WG_FAILS -eq 3 ]]; then
+        systemctl restart wg-quick@wg-s2s
+        sleep 30
+        HS2=$(wg show wg-s2s latest-handshakes 2>/dev/null | awk "{print \$2}")
+        if [[ -n "$HS2" && $(( $(date +%s) - HS2 )) -lt 60 ]]; then WG_RESULT="recovered after restart"; else WG_RESULT="still down after restart - home side or ionos issue"; fi
         curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-            -H "Title: VPS Tailscale self-heal" \
+            -H "Title: VPS wg-s2s self-heal" \
             -H "Priority: urgent" \
-            -d "tailscaled failed 3 consecutive checks, restarted it: ${TS_RESULT}" \
+            -d "wg-s2s handshake stale 3 consecutive checks, restarted it: ${WG_RESULT}" \
             "$NTFY_URL" > /dev/null 2>&1
-        rm -f "$TS_FAIL_FILE"
+        rm -f "$WG_FAIL_FILE"
     fi
-    # Tailscale down means the Mac Mini checks below are meaningless - skip them
+    # tunnel down means the Mac Mini checks below are meaningless - skip them
     exit 0
 else
-    rm -f "$TS_FAIL_FILE"
+    rm -f "$WG_FAIL_FILE"
 fi
 
 # Check ping
@@ -54,7 +57,7 @@ if [[ $PING_OK -ne 0 && $PAIMON_OK -ne 0 ]]; then
             -H "Title: Mac Mini Down" \
             -H "Priority: urgent" \
             -H "Tags: rotating_light" \
-            -d "Mac Mini (100.112.186.36) is unreachable. Ping and Paimon webhook both failed. All cron monitoring, backups, and alerting are offline." \
+            -d "Mac Mini (10.1.0.81 via wg-s2s) is unreachable. Ping and Paimon webhook both failed. All cron monitoring, backups, and alerting are offline." \
             "$NTFY_URL" > /dev/null 2>&1
     fi
 else

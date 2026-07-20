@@ -1,0 +1,13 @@
+services:
+  anvil:
+    image: python:3.12-slim
+    container_name: anvil
+    restart: unless-stopped
+    command: python /app/app.py
+    environment:
+      - ANVIL_SALT=${ANVIL_SALT}
+    volumes:
+      - ./app.py:/app/app.py:ro
+      - ./data:/data
+    ports:
+      - "127.0.0.1:8090:8080"
