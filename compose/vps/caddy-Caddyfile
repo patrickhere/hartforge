@@ -204,12 +204,6 @@ gist.hartforge.dev {
 	reverse_proxy 127.0.0.1:6157
 }
 
-term.hartforge.dev {
-	import protected
-	import tinyauth
-	reverse_proxy 127.0.0.1:8787
-}
-
 # chat.hartforge.dev - DISABLED, re-enable when IP restriction is sorted
 # NOTE: the old @blocked gate matched the raw Cf-Connecting-Ip header, which is
 # client-spoofable when the origin is hit directly. If re-enabled, use
