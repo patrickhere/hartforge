@@ -28,12 +28,28 @@
           {{ lxc_definitions if target == 'all'
              else lxc_definitions | selectattr('hostname', 'equalto', target) | list }}
 
+    # community.proxmox 2.0.0 needs proxmoxer >= 2.3. debian trixie only ships
+    # 2.2.0 with no newer candidate, so these tasks failed with "Requires
+    # proxmoxer 2.3 or newer" until 07-27-2026.
+    #
+    # 2.3.0 is staged at /opt/ansible-libs on the hypervisor (pure python, no
+    # compiled deps) and reached via PYTHONPATH. the system python3-proxmoxer
+    # deb stays at 2.2.0 and is left alone, so apt is never in conflict.
+    #
+    # rejected alternatives: `apt install python3.13-venv` and `python3-pip`
+    # both drag a system python upgrade / 54 packages onto a hypervisor that
+    # has unexplained hard crashes. `delegate_to: localhost` fails because
+    # macOS Local Network Privacy blocks ansible's python from reaching
+    # 10.1.0.50:8006 (nc and ssh work; python gets "No route to host").
     - name: Create LXC containers
+      environment:
+        PYTHONPATH: /opt/ansible-libs
       community.proxmox.proxmox:
         api_host: "{{ ansible_host }}"
         api_user: "{{ proxmox_api_user }}"
         api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: false          # proxmox self-signed cert, not valid for the bare IP
         node: "{{ proxmox_node }}"
         vmid: "{{ item.vmid }}"
         hostname: "{{ item.hostname }}"
@@ -41,12 +57,32 @@
         cores: "{{ item.cores }}"
         memory: "{{ item.memory }}"
         disk: "{{ item.disk }}"
-        netif: '{"net0":"name=eth0,bridge=vmbr0,ip={{ item.ip }},gw={{ item.gw }}"}'
+        netif: >-
+          {"net0":"name=eth0,bridge=vmbr0,ip={{ item.ip }},gw={{ item.gw }}{{
+          ',tag=' ~ item.vlan if item.vlan is defined else '' }}"}
         onboot: "{{ item.onboot | default(true) }}"
         unprivileged: "{{ item.unprivileged | default(true) }}"
+        # docker cannot extract layers in an unprivileged LXC without nesting -
+        # it fails with "failed to mount ... overlay ... permission denied".
+        # every working docker LXC here (immich 111, monitoring 108) has this
+        # set, but it had been applied by hand rather than by the playbook.
+        #
+        # keyctl=1 is also normally needed alongside nesting for docker, but the
+        # API token gets 403 "changing feature flags (except nesting) is only
+        # allowed for root@pam" if keyctl is included in the create call - only
+        # an interactive root@pam session can set it. nesting=1 alone is fine
+        # via token. Set keyctl by hand after creation: pct set <vmid>
+        # --features nesting=1,keyctl=1 (found provisioning LXC 201, 07-31-2026).
+        features: "{{ 'nesting=1' if (item.docker | default(false)) else omit }}"
         tags: "{{ item.tags | default(omit) }}"
         pubkey: "{{ ssh_authorized_keys | first }}"
-        nameserver: "10.1.0.10"
+        # AdGuard (10.1.0.10) is not in use anywhere on the network (Patrick,
+        # 07-21 and 07-31-2026) - it isn't wired into DHCP and isn't a resolver
+        # for anything, container being reachable is not evidence otherwise. This
+        # used to default here, and a DMZ-vlan LXC (201, fleet) hung on silent DNS
+        # timeouts because of it (Dmz zone can't route to it anyway - only
+        # Dmz->Gateway DNS is allowed). Public DNS for everything now.
+        nameserver: "1.1.1.1"
         searchdomain: "hartforge.dev"
         state: present
       loop: "{{ lxcs_to_create }}"
@@ -55,11 +91,16 @@
       register: created_lxcs
 
     - name: Start new LXC containers
+      environment:
+        PYTHONPATH: /opt/ansible-libs      # see note above
       community.proxmox.proxmox:
         api_host: "{{ ansible_host }}"
         api_user: "{{ proxmox_api_user }}"
         api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: false          # proxmox self-signed cert, not valid for the bare IP
+        node: "{{ proxmox_node }}"     # 2.0.0 needs this on start too, or it dies with "An error occurred: 'name'"
+        hostname: "{{ item.hostname }}"
         vmid: "{{ item.vmid }}"
         state: started
       loop: "{{ lxcs_to_create }}"

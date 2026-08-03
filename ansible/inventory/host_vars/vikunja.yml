@@ -1,0 +1,17 @@
+---
+svc_name: Vikunja
+# a `docker ps` check would pass while HTTP startup, sqlite access, migrations or
+# file permissions were all broken - and it would also match the vikunja-init
+# sidecar. svc_check runs host-side where curl exists, so assert the API actually
+# serves and reports the version we pinned.
+# note the v prefix: the docker tag is 2.4.0 but the API reports v2.4.0.
+# asserting the exact version proves the new image is actually live rather than
+# a stale container still serving - so this string must be bumped alongside the
+# image tag on every upgrade, or the deploy will fail its own health gate.
+svc_check: "curl -fsS --max-time 10 http://127.0.0.1:3456/api/v1/info | grep -q '\"version\":\"v2.4.0\"'"
+svc_port: 3456
+compose_path: /opt/vikunja
+
+backup_files:
+  - { src: "/opt/vikunja/.env", dest: "vikunja/.env" }
+  - { src: "/opt/vikunja/docker-compose.yml", dest: "vikunja/docker-compose.yml" }

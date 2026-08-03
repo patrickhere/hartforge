@@ -8,7 +8,11 @@
   vars:
     target_host: ""
     target_name: ""
-    prometheus_config: /opt/monitoring/prometheus.yml
+    # this MUST match what the prometheus container actually bind-mounts.
+    # it was /opt/monitoring/prometheus.yml until 07-27-2026, which nothing
+    # reads - the container mounts the path below. every registration before
+    # then silently went to a dead file.
+    prometheus_config: /opt/monitoring/prometheus/prometheus.yml
 
   tasks:
     - name: Validate inputs
@@ -24,12 +28,21 @@
       changed_when: false
       failed_when: false
 
-    - name: Add node-exporter target to prometheus.yml
+    # each host is its own job block in this config, so append a whole stanza.
+    # the previous lineinfile inserted a bare `- targets:` line after the first
+    # matching job_name, which produced invalid yaml (a targets list above its
+    # own static_configs key).
+    - name: Add node-exporter job to prometheus.yml
       when: already_exists.rc != 0
-      lineinfile:
+      blockinfile:
         path: "{{ prometheus_config }}"
-        insertafter: "job_name.*node"
-        line: "        - targets: ['{{ target_host }}:9100']  # {{ target_name }}"
+        marker: "  # {mark} node-{{ target_name }}"
+        block: |2
+            - job_name: node-{{ target_name }}
+              static_configs:
+                - targets: ['{{ target_host }}:9100']
+                  labels:
+                    host: {{ target_name }}
       notify: reload prometheus
 
     - name: Report
@@ -37,8 +50,19 @@
         msg: "{{ 'Already registered' if already_exists.rc == 0 else 'Added ' + target_name + ' (' + target_host + ':9100) to Prometheus' }}"
 
   handlers:
+    # MUST be a restart, not POST /-/reload.
+    #
+    # the prometheus container bind-mounts prometheus.yml as a SINGLE FILE, and
+    # blockinfile/lineinfile edit by writing a temp file and renaming it. the
+    # rename gives the path a new inode, which severs the bind mount - the
+    # container keeps reading the old one. /-/reload then returns 200 having
+    # cheerfully reloaded the unchanged file, so registration looks like it
+    # worked and silently did nothing. found 07-27-2026.
+    #
+    # the alternative fix is bind-mounting the directory instead of the file,
+    # which would let /-/reload work again.
     - name: reload prometheus
-      uri:
-        url: http://localhost:9090/-/reload
-        method: POST
-        status_code: [200, 204]
+      community.docker.docker_container:
+        name: prometheus
+        restart: true
+      listen: reload prometheus

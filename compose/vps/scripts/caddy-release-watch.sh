@@ -17,8 +17,6 @@ if [ -n "$LATEST_BOUNCER" ]; then
 fi
 
 if [ -n "$MSG" ] && [ "$LATEST_CADDY" != "$INSTALLED" ]; then
-    curl -fsS -m 10 -u "$NTFY_USER:$NTFY_PASS" \
-        -H "Title: custom caddy build update available" \
-        -d "$MSG rebuild: xcaddy build $LATEST_CADDY --with github.com/hslatman/caddy-crowdsec-bouncer" \
-        https://ntfy.hartforge.dev/homelab-news >/dev/null
+    /opt/scripts/notify.sh -t news -T "custom caddy build update available" \
+        -- "$MSG rebuild: xcaddy build $LATEST_CADDY --with github.com/hslatman/caddy-crowdsec-bouncer" >/dev/null
 fi

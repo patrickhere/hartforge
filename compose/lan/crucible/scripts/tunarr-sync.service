@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync Tunarr channels from Jellyfin library
+After=network.target docker.service
+
+[Service]
+Type=oneshot
+# JF_KEY / JF_SOURCE_ID live here, not in the script, so the script can be
+# versioned in git. mode 600.
+EnvironmentFile=/opt/yams/scripts/.env
+ExecStart=/usr/bin/python3 /opt/yams/scripts/tunarr-sync.py
+StandardOutput=journal
+StandardError=journal

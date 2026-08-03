@@ -62,7 +62,7 @@
 	@wireguard host wireguard.hartforge.dev
 	handle @wireguard {
 		import tinyauth
-		reverse_proxy http://10.1.0.58:51821
+		reverse_proxy http://10.1.0.58:10086
 	}
 
 	# --- Media ---
@@ -234,7 +234,10 @@
 	@home host home.hartforge.dev
 	handle @home {
 		import tinyauth
-		reverse_proxy http://10.1.0.54:3000
+		# generated start page, built every 5 min by build-home.py on the mac mini
+		# and rsynced here. replaced the gethomepage lxc (106) 07-22-2026.
+		root * /var/www/home
+		file_server
 	}
 
 	@git host git.hartforge.dev
@@ -250,14 +253,6 @@
 	@termix host termix.hartforge.dev
 	handle @termix {
 		reverse_proxy http://10.1.0.55:8080
-	}
-
-	@paimon host paimon.hartforge.dev
-	handle @paimon {
-		import tinyauth
-		reverse_proxy http://10.1.0.81:4822 {
-			flush_interval -1
-		}
 	}
 
 	@photos host photos.hartforge.dev

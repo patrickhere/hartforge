@@ -27,7 +27,7 @@ motd/          catppuccin MOTD system with a pokemon buddy per host
 
 ## highlights
 
-- `ansible/playbooks/` - 20 playbooks covering health checks, updates, config
+- `ansible/playbooks/` - 21 playbooks covering health checks, updates, config
   drift detection, disaster recovery, LXC provisioning, and self-healing
 - `compose/vps/caddy-Caddyfile` - caddy with the crowdsec bouncer plugin, every
   vhost behind a shared hardening snippet, auth via pocket ID (passkey OIDC)
@@ -45,6 +45,8 @@ motd/          catppuccin MOTD system with a pokemon buddy per host
 
 - `ansible/vars/secrets.yml` is ansible-vault encrypted in the working repo and
   excluded here; playbooks reference it for tokens (ntfy, forgejo, proxmox API)
-- compose files expect `.env` files documented by the `.env.example` next to them
+- compose files expect `.env` files documented by the `.env.tpl` or `.env.example`
+  next to them (services rendered by `render-env.sh` in the private repo use
+  `.env.tpl`, older ones still carry a plain `.env.example`)
 - this snapshot is refreshed manually from the working repos, so it may trail
   reality by a bit

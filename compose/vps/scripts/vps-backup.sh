@@ -11,9 +11,8 @@ export RESTIC_REPOSITORY RESTIC_PASSWORD KUMA_PUSH_TOKEN
 STAMP() { date '+%F %T'; }
 FAIL() {
   echo "$(STAMP) FAILED: $1"
-  curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-    -H "Title: VPS backup failed" -H "Priority: 4" -H "Tags: rotating_light" \
-    -d "vps-backup.sh: $1" https://ntfy.hartforge.dev/homelab-alerts > /dev/null
+  /opt/scripts/notify.sh -t alerts -T "VPS backup failed" -p 4 -g rotating_light \
+    -- "vps-backup.sh: $1" > /dev/null
   exit 1
 }
 

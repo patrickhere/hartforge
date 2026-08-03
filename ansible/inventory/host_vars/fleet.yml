@@ -1,0 +1,9 @@
+---
+svc_name: Fleet
+svc_check: "docker ps --filter name=^fleet$ --filter status=running -q | grep -q ."
+svc_port: 1337
+compose_path: /opt/fleet
+
+backup_files:
+  - { src: "/opt/fleet/.env", dest: "fleet/.env" }
+  - { src: "/opt/fleet/docker-compose.yml", dest: "fleet/docker-compose.yml" }

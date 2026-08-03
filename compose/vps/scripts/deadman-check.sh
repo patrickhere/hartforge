@@ -5,7 +5,6 @@
 
 MAC_MINI_TS="10.1.0.81"
 PAIMON_HEALTH="http://${MAC_MINI_TS}:7890/health"
-NTFY_URL="https://ntfy.hartforge.dev/homelab-alerts"
 STATE_FILE="/tmp/deadman-mac-mini.state"
 
 # Load ntfy credentials
@@ -24,11 +23,8 @@ if [[ -z "$HS" || $(( NOW - HS )) -gt 300 ]]; then
         sleep 30
         HS2=$(wg show wg-s2s latest-handshakes 2>/dev/null | awk "{print \$2}")
         if [[ -n "$HS2" && $(( $(date +%s) - HS2 )) -lt 60 ]]; then WG_RESULT="recovered after restart"; else WG_RESULT="still down after restart - home side or ionos issue"; fi
-        curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-            -H "Title: VPS wg-s2s self-heal" \
-            -H "Priority: urgent" \
-            -d "wg-s2s handshake stale 3 consecutive checks, restarted it: ${WG_RESULT}" \
-            "$NTFY_URL" > /dev/null 2>&1
+        /opt/scripts/notify.sh -t alerts -T "VPS wg-s2s self-heal" -p 5 \
+            -- "wg-s2s handshake stale 3 consecutive checks, restarted it: ${WG_RESULT}" > /dev/null 2>&1
         rm -f "$WG_FAIL_FILE"
     fi
     # tunnel down means the Mac Mini checks below are meaningless - skip them
@@ -53,21 +49,14 @@ if [[ $PING_OK -ne 0 && $PAIMON_OK -ne 0 ]]; then
     # Both checks failed
     if [[ ! -f "$STATE_FILE" ]]; then
         echo "$(date -Iseconds)" > "$STATE_FILE"
-        curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-            -H "Title: Mac Mini Down" \
-            -H "Priority: urgent" \
-            -H "Tags: rotating_light" \
-            -d "Mac Mini (10.1.0.81 via wg-s2s) is unreachable. Ping and Paimon webhook both failed. All cron monitoring, backups, and alerting are offline." \
-            "$NTFY_URL" > /dev/null 2>&1
+        /opt/scripts/notify.sh -t alerts -T "Mac Mini Down" -p 5 -g rotating_light \
+            -- "Mac Mini (10.1.0.81 via wg-s2s) is unreachable. Ping and Paimon webhook both failed. All cron monitoring, backups, and alerting are offline." > /dev/null 2>&1
     fi
 else
     # At least one check passed -- clear state
     if [[ -f "$STATE_FILE" ]]; then
-        curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-            -H "Title: Mac Mini Recovered" \
-            -H "Tags: white_check_mark" \
-            -d "Mac Mini is back online." \
-            "$NTFY_URL" > /dev/null 2>&1
+        /opt/scripts/notify.sh -t alerts -T "Mac Mini Recovered" -g white_check_mark \
+            -- "Mac Mini is back online." > /dev/null 2>&1
         rm -f "$STATE_FILE"
     fi
 fi

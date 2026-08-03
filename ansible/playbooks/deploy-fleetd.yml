@@ -1,0 +1,38 @@
+---
+# Install the fleetd (osquery) agent so a host shows up in Fleet MDM's host
+# portal (mdm.hartforge.dev). Package built once on the Mac via:
+#   fleetctl package --type deb --fleet-url=https://mdm.hartforge.dev --enroll-secret=<secret>
+# fleetctl itself is an admin CLI - it does NOT need to run on the target hosts,
+# only the generated .deb does.
+#
+# Usage: ansible-playbook playbooks/deploy-fleetd.yml --limit <group-or-host>
+#   -e deb_path=~/fleet-packages/fleet-osquery_1.58.0_amd64.deb   (default below)
+
+- name: Install fleetd agent
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    deb_path: "{{ lookup('env', 'HOME') }}/fleet-packages/fleet-osquery_1.58.0_amd64.deb"
+
+  tasks:
+    - name: Copy fleetd package to host
+      ansible.builtin.copy:
+        src: "{{ deb_path }}"
+        dest: /tmp/fleet-osquery.deb
+        mode: "0644"
+
+    - name: Install fleetd
+      ansible.builtin.apt:
+        deb: /tmp/fleet-osquery.deb
+      register: fleetd_install
+
+    - name: Clean up package file
+      ansible.builtin.file:
+        path: /tmp/fleet-osquery.deb
+        state: absent
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "fleetd installed on {{ inventory_hostname }}"
+      when: fleetd_install is changed

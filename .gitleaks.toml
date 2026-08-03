@@ -2,9 +2,11 @@
 useDefault = true
 
 [allowlist]
-description = "public-by-design values"
+description = "public-by-design values, and curl-auth-user false positives on shell variable interpolation (no literal credential present)"
 regexTarget = "line"
 regexes = [
   # cloudflare web analytics beacon tokens are served to every visitor in page html
   '''data-cf-beacon''',
+  # -u "${VAR:-}:${VAR:-}" is a shell variable reference, not a literal secret
+  '''-u "\$\{[A-Z_]+:-\}:\$\{[A-Z_]+:-\}"''',
 ]

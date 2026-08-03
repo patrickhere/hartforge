@@ -1,7 +1,7 @@
 ---
 # Deploy Docker Compose stacks from homelab-compose repo.
 # Usage: ansible-playbook playbooks/deploy-compose.yml --limit <hostname>
-#   -e compose_repo=~/Documents/projects/homelab/homelab-compose   (default)
+#   -e compose_repo=~/Documents/projects/homelab-stack/homelab/homelab-compose   (default)
 #   -e service_dir=monitoring                       Override compose subdir
 #
 # Requires: compose_path defined in host_vars (target deploy path on host)
@@ -12,7 +12,7 @@
   become: true
   gather_facts: false
   vars:
-    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/projects/homelab/homelab-compose"
+    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/projects/homelab-stack/homelab/homelab-compose"
     service_dir: ""
 
   tasks:
@@ -81,6 +81,13 @@
       when: svc_check is defined
       changed_when: false
       register: health_result
+      # failed_when: false is LOAD-BEARING, do not remove it. without it a
+      # non-zero svc_check aborts the play right here, and the "Rollback on
+      # failure" block below - which is gated on health_result.rc - is never
+      # reached. the rollback was silently dead code from the day it was written
+      # until 08-01-2026. the play still fails, just from the rollback's own
+      # fail task, AFTER the previous version has been restored.
+      failed_when: false
       tags: [deploy, health]
 
     - name: Rollback on failure

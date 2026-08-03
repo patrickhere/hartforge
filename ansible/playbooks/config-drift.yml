@@ -11,7 +11,12 @@
   gather_facts: false
   tags: [audit, drift]
   vars:
-    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/homelab-compose"
+    # was ~/Documents/homelab-compose, which has not existed since the 07-24
+    # reorg. every check therefore reported "SKIP (file missing)" rather than
+    # DRIFT, so this playbook silently detected nothing for over a week - which
+    # is exactly why the caddy repo/host divergence went unnoticed until
+    # 08-01-2026. deploy-compose.yml was updated for the reorg; this was not.
+    compose_repo: "{{ lookup('env', 'HOME') }}/Documents/projects/homelab-stack/homelab/homelab-compose"
     drift_found: []
     checks:
       - name: "Caddy - Caddyfile"
@@ -26,10 +31,6 @@
         host: "root@10.1.0.57"
         remote: "/opt/monitoring/prometheus.yml"
         local: "{{ compose_repo }}/monitoring/prometheus.yml"
-      - name: "Homepage - docker-compose"
-        host: "root@10.1.0.54"
-        remote: "/opt/homepage/docker-compose.yaml"
-        local: "{{ compose_repo }}/homepage/docker-compose.yaml"
       - name: "Uptime Kuma - docker-compose"
         host: "root@10.1.0.53"
         remote: "/opt/uptime-kuma/docker-compose.yaml"

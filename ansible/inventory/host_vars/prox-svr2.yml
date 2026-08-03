@@ -12,5 +12,43 @@ backup_files:
   - { src: "/etc/pve/storage.cfg", dest: "proxmox/storage.cfg" }
   - { src: "/etc/pve/user.cfg", dest: "proxmox/user.cfg" }
 
-# no LXC definitions yet - clean slate as of 2026-07-16, add here once a project is decided
-lxc_definitions: []
+# LXC definitions for IaC provisioning
+lxc_definitions:
+  # Fleet MDM - fleetdm.com, manages Patrick + wife's Apple devices via mdm.hartforge.dev.
+  # DMZ vlan (not Infra) so a compromise here can't reach the wg LXC or anything
+  # else at L2 - Dmz zone policy blocks Dmz->Internal at layer 3 instead.
+  - vmid: 201
+    hostname: fleet
+    ip: "10.1.30.11/24"
+    gw: "10.1.30.1"
+    vlan: 30
+    cores: 2
+    memory: 3072
+    disk: "local-lvm:20"
+    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    tags: "mdm"
+    onboot: true
+    docker: true
+    alloy: false
+
+  # Vikunja - self-hosted task tracker + idea inbox, public at tasks.hartforge.dev.
+  # DMZ vlan for the same reason as fleet, and more so: this one is publicly exposed
+  # through a cloudflare tunnel with only its own login in front. a tunnel stops
+  # inbound access to the origin, it does not contain an app rce or a container
+  # escape - those run from this guest's own address, so that address must not be
+  # on the trusted vlan. Dmz->Internal block means a compromise reaches nothing;
+  # Internal->Dmz allow is what lets the mac ssh-pull backups and prometheus scrape.
+  # alloy false for the same reason as fleet: loki is on Internal, unreachable here.
+  - vmid: 202
+    hostname: vikunja
+    ip: "10.1.30.12/24"
+    gw: "10.1.30.1"
+    vlan: 30
+    cores: 2
+    memory: 1536
+    disk: "local-lvm:8"
+    template: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    tags: "apps"
+    onboot: true
+    docker: true
+    alloy: false

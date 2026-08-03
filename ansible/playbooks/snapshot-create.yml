@@ -27,12 +27,19 @@
           {{ lxc_definitions if target == 'all'
              else lxc_definitions | selectattr('hostname', 'equalto', target) | list }}
 
+    # PYTHONPATH picks up proxmoxer 2.3.0 staged at /opt/ansible-libs - see the
+    # note in provision-lxc.yml. this playbook had been failing for the same
+    # proxmoxer 2.2.0 vs 2.3 reason, so pre-maintenance snapshots were NOT
+    # being taken. found and fixed 07-27-2026.
     - name: Create snapshot for each LXC
+      environment:
+        PYTHONPATH: /opt/ansible-libs
       community.proxmox.proxmox_snap:
         api_host: "{{ ansible_host }}"
         api_user: "{{ proxmox_api_user }}"
         api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: false          # proxmox self-signed cert, not valid for the bare IP
         vmid: "{{ item.vmid }}"
         snapname: "{{ snap_name }}"
         description: "Automated snapshot before maintenance"

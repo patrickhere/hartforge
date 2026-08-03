@@ -4,7 +4,6 @@
 # so a fixed-time reminder needs to live outside it. Runs against the local
 # (VPS) Kuma instance since it stays reachable even during LAN-side outages.
 
-NTFY_URL="https://ntfy.hartforge.dev/homelab-alerts"
 KUMA_DB="/var/lib/docker/volumes/uptime-kuma_data/_data/kuma.db"
 
 source /opt/scripts/.env 2>/dev/null
@@ -17,11 +16,9 @@ DOWN=$(sqlite3 "$KUMA_DB" "
 
 if [ -n "$DOWN" ]; then
   MSG=$(echo "$DOWN" | sed 's/^/- /')
-  curl -s -u "${NTFY_USER}:${NTFY_PASS}" \
-    -H "Title: Uptime Kuma - Still Down" \
-    -H "Priority: default" \
-    -H "Tags: warning" \
-    -H "Actions: view, Open Uptime Kuma, https://uptime-ext.hartforge.dev" \
-    -d "$MSG" \
-    "$NTFY_URL" > /dev/null 2>&1
+  # $MSG lines start with "- ", so -- before the body is load-bearing:
+  # getopts would otherwise eat the first line as a flag and send nothing.
+  /opt/scripts/notify.sh -t alerts -T "Uptime Kuma - Still Down" -g warning \
+    -c "https://uptime-ext.hartforge.dev" \
+    -- "$MSG" > /dev/null 2>&1
 fi
